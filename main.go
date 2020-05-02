@@ -39,14 +39,14 @@ type trianglover struct {
 
 var trianglovers []*trianglover
 
-func drawPolygon(screen *ebiten.Image, coordinates ...int) {
-	image, _ := ebiten.NewImage(1, 1, ebiten.FilterDefault)
-	image.Fill(color.White)
+func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates ...int) {
+	image, _ := ebiten.NewImage(16, 16, ebiten.FilterDefault)
+	image.Fill(clr)
 	triopts := &ebiten.DrawTrianglesOptions{}
-	vertexes := make([]ebiten.Vertex, 0)
-	indicies := make([]uint16, 0)
+	vertices := make([]ebiten.Vertex, 0)
+	indices := make([]uint16, 0)
 	for i := 0; i < len(coordinates)-1; i += 2 {
-		vertexes = append(vertexes, ebiten.Vertex{
+		vertices = append(vertices, ebiten.Vertex{
 			DstX:   float32(coordinates[i]),
 			DstY:   float32(coordinates[i+1]),
 			SrcX:   0,
@@ -56,9 +56,35 @@ func drawPolygon(screen *ebiten.Image, coordinates ...int) {
 			ColorB: 1,
 			ColorA: 1,
 		})
-		indicies = append(indicies, uint16(i/2))
+		indices = append(indices, uint16(i/2))
+		if i > 0 {
+			indices = append(indices, uint16(len(coordinates)/2))
+			indices = append(indices, uint16(i/2))
+		}
 	}
-	screen.DrawTriangles(vertexes, indicies, image, triopts)
+	indices = append(indices, 0)
+	indices = append(indices, uint16(len(coordinates)/2))
+
+	totalX := 0
+	totalY := 0
+	for i := 0; i < len(coordinates)-1; i += 2 {
+		totalX += coordinates[i]
+		totalY += coordinates[i+1]
+	}
+	centerX := totalX / (len(coordinates) / 2)
+	centerY := totalY / (len(coordinates) / 2)
+	vertices = append(vertices, ebiten.Vertex{
+		DstX:   float32(centerX),
+		DstY:   float32(centerY),
+		SrcX:   0,
+		SrcY:   0,
+		ColorR: 1,
+		ColorG: 1,
+		ColorB: 1,
+		ColorA: 1,
+	})
+
+	screen.DrawTriangles(vertices, indices, image, triopts)
 }
 
 func update(screen *ebiten.Image) error {
@@ -76,7 +102,8 @@ func update(screen *ebiten.Image) error {
 		}
 	}
 
-	drawPolygon(screen, 100, 100, 150, 150, 50, 150)
+	drawPolygon(screen, color.RGBA{255, 0, 0, 255}, 50, 0, 100, 50, 100, 100, 50, 150, 0, 100, 0, 50)
+	//drawPolygon(screen, color.RGBA{255, 0, 0, 255}, 100, 100, 150, 150, 50, 150)
 
 	return nil
 }
