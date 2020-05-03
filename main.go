@@ -12,6 +12,7 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/text"
+	"github.com/hajimehoshi/ebiten/vector"
 	"golang.org/x/image/font"
 )
 
@@ -56,51 +57,15 @@ var hexLabels = []string{
 }
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates [][2]int) {
-	ebiten.SetScreenScale(1.5)
-
-	vertices := make([]ebiten.Vertex, 0)
-	indices := make([]uint16, 0)
-	totalX := 0
-	totalY := 0
-	for i := 0; i < len(coordinates); i++ {
-		totalX += coordinates[i][0]
-		totalY += coordinates[i][1]
-		vertices = append(vertices, ebiten.Vertex{
-			DstX:   float32(coordinates[i][0]),
-			DstY:   float32(coordinates[i][1]),
-			SrcX:   0,
-			SrcY:   0,
-			ColorR: 1,
-			ColorG: 1,
-			ColorB: 1,
-			ColorA: 1,
-		})
-		indices = append(indices, uint16(i))
-		if i > 0 {
-			indices = append(indices, uint16(len(coordinates)))
-			indices = append(indices, uint16(i))
-		}
+	path := vector.Path{}
+	path.MoveTo(float32(coordinates[0][0]), float32(coordinates[0][1]))
+	for i := 1; i < len(coordinates); i++ {
+		path.LineTo(float32(coordinates[i][0]), float32(coordinates[i][1]))
 	}
-	indices = append(indices, 0)
-	indices = append(indices, uint16(len(coordinates)))
-
-	centerX := totalX / len(coordinates)
-	centerY := totalY / len(coordinates)
-	vertices = append(vertices, ebiten.Vertex{
-		DstX:   float32(centerX),
-		DstY:   float32(centerY),
-		SrcX:   0,
-		SrcY:   0,
-		ColorR: 1,
-		ColorG: 1,
-		ColorB: 1,
-		ColorA: 1,
+	path.MoveTo(float32(coordinates[0][0]), float32(coordinates[0][1]))
+	path.Fill(screen, &vector.FillOptions{
+		Color: clr,
 	})
-
-	image, _ := ebiten.NewImage(16, 16, ebiten.FilterDefault)
-	image.Fill(clr)
-	triopts := &ebiten.DrawTrianglesOptions{}
-	screen.DrawTriangles(vertices, indices, image, triopts)
 }
 
 func distance(p1, p2 [2]int) float64 {
@@ -198,6 +163,7 @@ func init() {
 }
 
 func update(screen *ebiten.Image) error {
+	ebiten.SetScreenScale(1.5)
 	if trianglovers == nil {
 		trianglovers = make([]*trianglover, 0)
 		for i := 0; i < 10; i++ {
