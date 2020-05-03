@@ -110,8 +110,13 @@ func distance(p1, p2 [2]int) float64 {
 }
 
 func angle(p1, p2, p3 [2]int) float64 {
-	angle := math.Atan2(float64(p3[1]-p1[1]), float64(p3[0]-p1[0])) - math.Atan2(float64(p2[1]-p1[1]), float64(p2[0]-p1[0]))
-	return angle * 180 / math.Pi
+	radians := math.Atan2(float64(p3[1]-p1[1]), float64(p3[0]-p1[0])) - math.Atan2(float64(p2[1]-p1[1]), float64(p2[0]-p1[0]))
+	degrees := radians * 180 / math.Pi
+	if degrees > 0 {
+		return degrees
+	} else {
+		return 360 + degrees
+	}
 }
 
 func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints preferencePoints) {
@@ -169,8 +174,6 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints preferencePoints)
 	a := points[prefPoints.a]
 	b := points[prefPoints.b]
 	c := points[prefPoints.c]
-	// angle := math.Atan2(float64(c[1]-a[1]), float64(c[0]-a[0])) - math.Atan2(float64(b[1]-a[1]), float64(b[0]-a[0]))
-	// angle = angle * 180 / math.Pi
 	A := angle(a, b, c)
 	B := angle(b, c, a)
 	C := angle(c, a, b)
