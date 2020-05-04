@@ -11,6 +11,7 @@ import (
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/text"
 	"github.com/hajimehoshi/ebiten/vector"
 	"golang.org/x/image/font"
@@ -45,6 +46,11 @@ type trianglover struct {
 	guessPoints preferencePoints
 }
 
+type dragPoint struct {
+	position [2]int
+	dragging bool
+}
+
 var trianglovers []*trianglover
 var defaultFont font.Face
 var hexLabels = []string{
@@ -55,6 +61,9 @@ var hexLabels = []string{
 	"Romance",
 	"Family",
 }
+var dragPoints map[string]*dragPoint
+var dragTargets [][2]int
+var currentLover *trianglover
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates [][2]int) {
 	path := vector.Path{}
@@ -102,12 +111,12 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints preferencePoints)
 		if nextIndex >= len(hexPoints) {
 			nextIndex = 0
 		}
-		xDelta := (hexPoints[nextIndex][0] - hexPoints[i][0]) / 17
-		yDelta := (hexPoints[nextIndex][1] - hexPoints[i][1]) / 17
-		for j := 0; j < 17; j++ {
+		xDelta := float64(hexPoints[nextIndex][0]-hexPoints[i][0]) / 17
+		yDelta := float64(hexPoints[nextIndex][1]-hexPoints[i][1]) / 17
+		for j := 0.0; j < 17; j++ {
 			points = append(points, [2]int{
-				hexPoints[i][0] + j*xDelta,
-				hexPoints[i][1] + j*yDelta,
+				hexPoints[i][0] + int(j*xDelta),
+				hexPoints[i][1] + int(j*yDelta),
 			})
 		}
 	}
@@ -117,6 +126,12 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints preferencePoints)
 		points[prefPoints.b],
 		points[prefPoints.c],
 	})
+	// Register drag points (targets)
+	dragTargets = points
+	// Register drag points.
+	dragPoints["a"].position = points[prefPoints.a]
+	dragPoints["b"].position = points[prefPoints.b]
+	dragPoints["c"].position = points[prefPoints.c]
 	// Add labels.
 	for i, hexLabel := range hexLabels {
 		x := hexPoints[i][0]
@@ -160,6 +175,12 @@ func init() {
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
+	dragPoints = map[string]*dragPoint{
+		"a": {},
+		"b": {},
+		"c": {},
+	}
+	dragTargets = [][2]int{}
 }
 
 func update(screen *ebiten.Image) error {
@@ -170,16 +191,67 @@ func update(screen *ebiten.Image) error {
 			trianglovers = append(trianglovers, &trianglover{
 				name: fmt.Sprintf("%d", i),
 				points: preferencePoints{
-					a: rand.Intn(33),
-					b: rand.Intn(33) + 33,
-					c: rand.Intn(33) + 66,
+					a: rand.Intn(34),
+					b: rand.Intn(34) + 34,
+					c: rand.Intn(34) + 68,
 				},
 			})
 		}
+		currentLover = trianglovers[0]
 	}
 
-	drawMatchChart(screen, width-180, height-120, trianglovers[0].points)
-	drawTrianglover(screen, trianglovers[0])
+	mouseX, mouseY := ebiten.CursorPosition()
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		for _, point := range dragPoints {
+			point.dragging = false
+		}
+	}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		for _, point := range dragPoints {
+			if distance(point.position, [2]int{mouseX, mouseY}) < 5 {
+				point.dragging = true
+				break
+			}
+		}
+	}
+	for pointID, point := range dragPoints {
+		if !point.dragging {
+			continue
+		}
+		min := 0
+		max := 34
+		switch pointID {
+		case "b":
+			min = 34
+			max = 68
+		case "c":
+			min = 68
+			max = 102
+		}
+		closestID := -1
+		closestDistance := 100.0
+		for i := min; i < max; i++ {
+			d := distance(dragTargets[i], [2]int{mouseX, mouseY})
+			if d < closestDistance {
+				closestID = i
+				closestDistance = d
+			}
+		}
+		if closestID == -1 {
+			continue
+		}
+		switch pointID {
+		case "a":
+			currentLover.points.a = closestID
+		case "b":
+			currentLover.points.b = closestID
+		case "c":
+			currentLover.points.c = closestID
+		}
+	}
+
+	drawMatchChart(screen, width-180, height-120, currentLover.points)
+	drawTrianglover(screen, currentLover)
 
 	return nil
 }
