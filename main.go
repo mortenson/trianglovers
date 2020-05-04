@@ -164,7 +164,7 @@ func handleDrag() {
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		for _, point := range dragPoints {
-			if distance(point.position, vertex{mouseX, mouseY}) < 5 {
+			if distance(point.position, vertex{mouseX, mouseY}) < 10 {
 				point.dragging = true
 				break
 			}
@@ -209,11 +209,13 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 			vertices[i] = points[0]
 			continue
 		}
-		vertices[i] = points[int(math.Abs(float64(lover.points[i]-lover.points[lover.headPoint])))]
+		diff := lover.points[i] - lover.points[lover.headPoint]
+		if diff < 0 {
+			diff += len(points)
+		}
+		vertices[i] = points[diff]
 	}
 	// Scale triangle up.
-	// centerX := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
-	// centerY := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
 	scaleX := vertices[0][0]
 	scaleY := vertices[0][1]
 	scale := 2
