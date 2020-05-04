@@ -201,23 +201,25 @@ func handleDrag() {
 }
 
 func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
-	points := getHexBoundaryPoints(getHexPoints(100, 100))
+	points := getHexBoundaryPoints(getHexPoints(100, 400))
 	vertices := []vertex{points[lover.points[0]], points[lover.points[1]], points[lover.points[2]]}
-	centerX := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
-	centerY := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
-	// Scale triangle up.
-	scale := 2
-	for i := range vertices {
-		vertices[i][0] = centerX + ((vertices[i][0] - centerX) * scale)
-		vertices[i][1] = centerY + ((vertices[i][1] - centerY) * scale)
-	}
-	// Rotate triangle.
+	// Rotate triangle so that the head is facing up.
 	for i := range vertices {
 		if i == lover.headPoint {
 			vertices[i] = points[0]
 			continue
 		}
 		vertices[i] = points[int(math.Abs(float64(lover.points[i]-lover.points[lover.headPoint])))]
+	}
+	// Scale triangle up.
+	// centerX := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
+	// centerY := (vertices[0][0] + vertices[1][0] + vertices[2][0]) / 3
+	scaleX := vertices[0][0]
+	scaleY := vertices[0][1]
+	scale := 2
+	for i := range vertices {
+		vertices[i][0] = scaleX + ((vertices[i][0] - scaleX) * scale)
+		vertices[i][1] = scaleY + ((vertices[i][1] - scaleY) * scale)
 	}
 	drawPolygon(screen, color.White, vertices)
 }
