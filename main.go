@@ -257,11 +257,18 @@ func init() {
 		"ROMANCE":    68,
 		"FAMILY":     85,
 	}
-	normalizePoint := func(p int) int {
-		if p < 0 {
-			return p + 102
+	fixRanges := func(ranges [][2]int) [][2]int {
+		for i := range ranges {
+			for j := range ranges[i] {
+				if ranges[i][j] < 0 {
+					ranges[i][j] += 102
+				}
+				if ranges[i][j] > 102 {
+					ranges[i][j] -= 102
+				}
+			}
 		}
-		return p
+		return ranges
 	}
 	questions = []question{}
 	for label, hexPoint := range hexPoints {
@@ -270,23 +277,23 @@ func init() {
 			answers: []answer{
 				{
 					ID: label + "_A_STRONG",
-					ranges: [][2]int{
-						{normalizePoint(hexPoint - 8), hexPoint},
+					ranges: fixRanges([][2]int{
+						{hexPoint - 8, hexPoint},
 						{hexPoint, hexPoint + 8},
-					},
+					}),
 				},
 				{
 					ID: label + "_A_NORMAL",
-					ranges: [][2]int{
-						{normalizePoint(hexPoint - 17), normalizePoint(hexPoint - 8)},
+					ranges: fixRanges([][2]int{
+						{hexPoint - 17, hexPoint - 8},
 						{hexPoint + 8, hexPoint + 17},
-					},
+					}),
 				},
 				{
 					ID: label + "_A_AGAINST",
-					ranges: [][2]int{
+					ranges: fixRanges([][2]int{
 						{hexPoint + 34, hexPoint + 68},
-					},
+					}),
 				},
 			},
 		})
