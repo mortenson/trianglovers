@@ -50,6 +50,18 @@ var dragPoints [3]*dragPoint
 var dragTargets []vertex
 var currentLover *trianglover
 
+type answer struct {
+	ID     string
+	ranges [][2]int
+}
+
+type question struct {
+	ID      string
+	answers []answer
+}
+
+var questions []question
+
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
 	path.MoveTo(float32(coordinates[0][0]), float32(coordinates[0][1]))
@@ -73,9 +85,8 @@ func angle(p1, p2, p3 vertex) float64 {
 	degrees := radians * 180 / math.Pi
 	if degrees > 0 {
 		return degrees
-	} else {
-		return 360 + degrees
 	}
+	return 360 + degrees
 }
 
 func getHexPoints(x, y int) []vertex {
@@ -201,7 +212,7 @@ func handleDrag() {
 }
 
 func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
-	points := getHexBoundaryPoints(getHexPoints(100, 400))
+	points := getHexBoundaryPoints(getHexPoints(100, 300))
 	vertices := []vertex{points[lover.points[0]], points[lover.points[1]], points[lover.points[2]]}
 	// Rotate triangle so that the head is facing up.
 	for i := range vertices {
@@ -238,6 +249,48 @@ func init() {
 	})
 	dragTargets = []vertex{}
 	dragPoints = [3]*dragPoint{{}, {}, {}}
+	hexPoints := map[string]int{
+		"COMFORT":    0,
+		"WEALTH":     17,
+		"ADVENTURE":  34,
+		"EXCITEMENT": 51,
+		"ROMANCE":    68,
+		"FAMILY":     85,
+	}
+	normalizePoint := func(p int) int {
+		if p < 0 {
+			return p + 102
+		}
+		return p
+	}
+	questions = []question{}
+	for label, hexPoint := range hexPoints {
+		questions = append(questions, question{
+			ID: label + "_A",
+			answers: []answer{
+				{
+					ID: label + "_A_STRONG",
+					ranges: [][2]int{
+						{normalizePoint(hexPoint - 8), hexPoint},
+						{hexPoint, hexPoint + 8},
+					},
+				},
+				{
+					ID: label + "_A_NORMAL",
+					ranges: [][2]int{
+						{normalizePoint(hexPoint - 17), normalizePoint(hexPoint - 8)},
+						{hexPoint + 8, hexPoint + 17},
+					},
+				},
+				{
+					ID: label + "_A_AGAINST",
+					ranges: [][2]int{
+						{hexPoint + 34, hexPoint + 68},
+					},
+				},
+			},
+		})
+	}
 }
 
 func update(screen *ebiten.Image) error {
