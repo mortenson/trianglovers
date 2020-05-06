@@ -74,6 +74,31 @@ func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	})
 }
 
+func drawPolygonLine(screen *ebiten.Image, width float64, clr color.Color, coordinates []vertex) {
+	drawPolygon(screen, clr, coordinates)
+	centerX := 0
+	centerY := 0
+	for i := range coordinates {
+		centerX += coordinates[i][0]
+		centerY += coordinates[i][1]
+	}
+	centerX = centerX / len(coordinates)
+	centerY = centerY / len(coordinates)
+	for i := range coordinates {
+		offsetX := width
+		offsetY := width
+		if coordinates[i][0] > centerX {
+			offsetX = offsetX * -1
+		}
+		if coordinates[i][1] > centerY {
+			offsetY = offsetY * -1
+		}
+		coordinates[i][0] = centerX + int(float64(coordinates[i][0]-centerX)+offsetX)
+		coordinates[i][1] = centerY + int(float64(coordinates[i][1]-centerY)+offsetY)
+	}
+	drawPolygon(screen, color.Black, coordinates)
+}
+
 func distance(p1, p2 vertex) float64 {
 	first := math.Pow(float64(p2[0]-p1[0]), 2)
 	second := math.Pow(float64(p2[1]-p1[1]), 2)
@@ -237,6 +262,10 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	drawPolygon(screen, color.White, vertices)
 }
 
+func drawQuestions(screen *ebiten.Image) {
+	drawPolygonLine(screen, 2, color.White, []vertex{{400, 20}, {780, 20}, {780, 400}, {400, 400}})
+}
+
 func init() {
 	tt, err := truetype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
@@ -321,6 +350,7 @@ func update(screen *ebiten.Image) error {
 	handleDrag()
 	drawMatchChart(screen, width-180, height-120, currentLover.points)
 	drawTrianglover(screen, currentLover)
+	drawQuestions(screen)
 
 	return nil
 }
