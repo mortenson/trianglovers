@@ -49,6 +49,8 @@ var hexLabels = []string{
 var dragPoints [3]*dragPoint
 var dragTargets []vertex
 var currentLover *trianglover
+var hoverQuestion int
+var currentQuestion int
 
 type answer struct {
 	ID     string
@@ -264,6 +266,62 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 
 func drawQuestions(screen *ebiten.Image) {
 	drawPolygonLine(screen, 2, color.White, []vertex{{400, 20}, {780, 20}, {780, 400}, {400, 400}})
+	x := 410
+	y := 42
+	for i, q := range questions {
+		questionText := q.ID
+		var clr color.Color
+		if currentQuestion == i {
+			clr = color.RGBA{255, 255, 0, 255}
+		} else if hoverQuestion == i {
+			clr = color.RGBA{255, 0, 0, 255}
+		} else {
+			clr = color.White
+		}
+		text.Draw(screen, questionText, defaultFont, x, y+(i*20), clr)
+	}
+}
+
+func handleQuestions() {
+	mouseX, mouseY := ebiten.CursorPosition()
+	y := 42
+	hoverQuestion = -1
+	for i := range questions {
+		qY := y + (i * 20)
+		if mouseX >= 410 && mouseX <= 780 && mouseY <= qY && mouseY >= qY-12 {
+			if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+				currentQuestion = i
+			} else {
+				hoverQuestion = i
+			}
+			break
+		}
+	}
+}
+
+func drawAnswer(screen *ebiten.Image) {
+	drawPolygonLine(screen, 2, color.White, []vertex{{20, 500}, {500, 500}, {500, 580}, {20, 580}})
+	if currentQuestion == -1 {
+		return
+	}
+	chosenAnswer := -1
+	for i, a := range questions[currentQuestion].answers {
+		for _, r := range a.ranges {
+			for _, p := range currentLover.points {
+				if (chosenAnswer == -1 || i <= chosenAnswer) && p >= r[0] && p <= r[1] {
+					chosenAnswer = i
+				}
+			}
+		}
+	}
+	var answerID string
+	if chosenAnswer != -1 {
+		answerID = questions[currentQuestion].answers[chosenAnswer].ID
+	} else {
+		answerID = questions[currentQuestion].ID + "_DEFAULT"
+	}
+	answerText := answerID
+	text.Draw(screen, answerText, defaultFont, 30, 510+12, color.White)
 }
 
 func init() {
@@ -291,8 +349,7 @@ func init() {
 			for j := range ranges[i] {
 				if ranges[i][j] < 0 {
 					ranges[i][j] += 102
-				}
-				if ranges[i][j] > 102 {
+				} else if ranges[i][j] > 102 {
 					ranges[i][j] -= 102
 				}
 			}
@@ -307,7 +364,7 @@ func init() {
 				{
 					ID: label + "_A_STRONG",
 					ranges: fixRanges([][2]int{
-						{hexPoint - 8, hexPoint},
+						{hexPoint - 8, hexPoint - 1},
 						{hexPoint, hexPoint + 8},
 					}),
 				},
@@ -318,15 +375,12 @@ func init() {
 						{hexPoint + 8, hexPoint + 17},
 					}),
 				},
-				{
-					ID: label + "_A_AGAINST",
-					ranges: fixRanges([][2]int{
-						{hexPoint + 34, hexPoint + 68},
-					}),
-				},
 			},
 		})
 	}
+	log.Printf("%+v", questions)
+	currentQuestion = -1
+	hoverQuestion = -1
 }
 
 func update(screen *ebiten.Image) error {
@@ -348,9 +402,11 @@ func update(screen *ebiten.Image) error {
 	}
 
 	handleDrag()
+	handleQuestions()
 	drawMatchChart(screen, width-180, height-120, currentLover.points)
 	drawTrianglover(screen, currentLover)
 	drawQuestions(screen)
+	drawAnswer(screen)
 
 	return nil
 }
