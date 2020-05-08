@@ -36,8 +36,34 @@ type dragPoint struct {
 	dragging bool
 }
 
+type answer struct {
+	ID     string
+	ranges [][2]int
+}
+
+type question struct {
+	ID      string
+	answers []answer
+}
+
+type match struct {
+	a     int
+	b     int
+	color color.Color
+}
+
+type gameModeType int
+
+const (
+	modeTitle gameModeType = iota
+	modeGuess
+	modeMatch
+	modeResult
+)
+
 var trianglovers []*trianglover
 var defaultFont font.Face
+var largeFont font.Face
 var hexLabels = []string{
 	"Comfort",
 	"Wealth",
@@ -52,18 +78,11 @@ var currentLover *trianglover
 var currentLoverIndex int
 var hoverQuestion int
 var currentQuestion int
-
-type answer struct {
-	ID     string
-	ranges [][2]int
-}
-
-type question struct {
-	ID      string
-	answers []answer
-}
-
 var questions []question
+var gameMode gameModeType
+var matches []match
+var lastMatch int
+var lastMatchColor color.Color
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -148,7 +167,7 @@ func getHexBoundaryPoints(hexPoints []vertex) []vertex {
 	return points
 }
 
-func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int) {
+func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabels bool) {
 	// Draw hexagon.
 	hexPoints := getHexPoints(x, y)
 	drawPolygon(screen, color.RGBA{255, 0, 0, 255}, hexPoints)
@@ -166,6 +185,9 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int) {
 	dragPoints[1].position = points[prefPoints[1]]
 	dragPoints[2].position = points[prefPoints[2]]
 	// Add labels.
+	if !drawLabels {
+		return
+	}
 	for i, hexLabel := range hexLabels {
 		x := hexPoints[i][0]
 		y := hexPoints[i][1]
@@ -184,14 +206,14 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int) {
 		text.Draw(screen, hexLabel, defaultFont, x, y, color.White)
 	}
 	// Add angles (@todo).
-	a := points[prefPoints[0]]
-	b := points[prefPoints[1]]
-	c := points[prefPoints[2]]
-	A := angle(a, b, c)
-	B := angle(b, c, a)
-	C := angle(c, a, b)
-	text.Draw(screen, fmt.Sprintf("%+v %+v %+v", points[prefPoints[0]], points[prefPoints[1]], points[prefPoints[2]]), defaultFont, 12, 12, color.White)
-	text.Draw(screen, fmt.Sprintf("A: %f B: %f C: %f", A, B, C), defaultFont, 12, 24, color.White)
+	// a := points[prefPoints[0]]
+	// b := points[prefPoints[1]]
+	// c := points[prefPoints[2]]
+	// A := angle(a, b, c)
+	// B := angle(b, c, a)
+	// C := angle(c, a, b)
+	// text.Draw(screen, fmt.Sprintf("%+v %+v %+v", points[prefPoints[0]], points[prefPoints[1]], points[prefPoints[2]]), defaultFont, 12, 12, color.White)
+	// text.Draw(screen, fmt.Sprintf("A: %f B: %f C: %f", A, B, C), defaultFont, 12, 24, color.White)
 }
 
 func handleDrag() {
@@ -312,21 +334,25 @@ func handleNextPrevious() {
 			currentQuestion = -1
 			hoverQuestion = -1
 		}
-	} else if mouseX <= 780 && mouseX >= 690 && mouseY <= 350 && mouseY >= 310 {
+	} else if mouseX <= 610 && mouseX >= 530 && mouseY <= 350 && mouseY >= 310 {
 		if currentLoverIndex < len(trianglovers)-1 {
 			currentLoverIndex++
 			currentLover = trianglovers[currentLoverIndex]
 			currentQuestion = -1
 			hoverQuestion = -1
 		}
+	} else if mouseX <= 780 && mouseX >= 690 && mouseY <= 350 && mouseY >= 310 {
+		gameMode = modeMatch
 	}
 }
 
 func drawNextPrevious(screen *ebiten.Image) {
 	drawPolygonLine(screen, 2, color.White, []vertex{{400, 310}, {510, 310}, {510, 350}, {400, 350}})
 	text.Draw(screen, "Previous Lover", defaultFont, 410, 335, color.White)
+	drawPolygonLine(screen, 2, color.White, []vertex{{520, 310}, {610, 310}, {610, 350}, {520, 350}})
+	text.Draw(screen, "Next Lover", defaultFont, 530, 335, color.White)
 	drawPolygonLine(screen, 2, color.White, []vertex{{690, 310}, {780, 310}, {780, 350}, {690, 350}})
-	text.Draw(screen, "Next Lover", defaultFont, 700, 335, color.White)
+	text.Draw(screen, "Match!", defaultFont, 710, 335, color.White)
 }
 
 func drawAnswer(screen *ebiten.Image) {
@@ -354,6 +380,75 @@ func drawAnswer(screen *ebiten.Image) {
 	text.Draw(screen, answerText, defaultFont, 30, 510+12, color.White)
 }
 
+func handleStart() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	gameMode = modeGuess
+}
+
+func drawTitle(screen *ebiten.Image) {
+	title := "TRIANGLOVERS"
+	text.Draw(screen, title, largeFont, (width/2)-((len(title)*30)/2), (height/2)-45, color.White)
+	button := "START"
+	text.Draw(screen, button, largeFont, (width/2)-((len(button)*30)/2), (height/2)+45, color.RGBA{255, 0, 0, 255})
+}
+
+func handleMatch() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	mouseX, mouseY := ebiten.CursorPosition()
+	for i := range trianglovers {
+		x := ((i % 5) * 125) + 100
+		y := (int(i/5) * 125) + 25
+		width := 100
+		height := 100
+		if mouseX <= x+width && mouseX >= x && mouseY <= y+height && mouseY >= y {
+			for j, m := range matches {
+				if m.a == i || m.b == i {
+					matches = append(matches[:j], matches[j+1:]...)
+					break
+				}
+			}
+			if lastMatch == i {
+				lastMatch = -1
+			} else if lastMatch != -1 {
+				matches = append(matches, match{
+					a:     lastMatch,
+					b:     i,
+					color: lastMatchColor,
+				})
+				lastMatch = -1
+			} else {
+				lastMatch = i
+				lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
+			}
+		}
+	}
+}
+
+func drawMatchPage(screen *ebiten.Image) {
+	colormap := map[int]color.Color{}
+	for _, m := range matches {
+		colormap[m.a] = m.color
+		colormap[m.b] = m.color
+	}
+	for i, lover := range trianglovers {
+		x := ((i % 5) * 125) + 100
+		y := (int(i/5) * 125) + 25
+		drawMatchChart(screen, x, y, lover.guessPoints, false)
+		clr, ok := colormap[i]
+		if !ok {
+			clr = color.White
+		}
+		if lastMatch == i {
+			clr = lastMatchColor
+		}
+		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
+	}
+}
+
 func init() {
 	tt, err := truetype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
@@ -361,6 +456,11 @@ func init() {
 	}
 	defaultFont = truetype.NewFace(tt, &truetype.Options{
 		Size:    12,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	largeFont = truetype.NewFace(tt, &truetype.Options{
+		Size:    45,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -427,34 +527,48 @@ func init() {
 		}
 		headPoint := rand.Intn(3)
 		trianglovers = append(trianglovers, &trianglover{
-			name:        fmt.Sprintf("%d", i),
+			name:        "Lover " + fmt.Sprintf("%d", i),
 			points:      points,
 			headPoint:   headPoint,
 			guessPoints: guessPoints,
 		})
 		trianglovers = append(trianglovers, &trianglover{
-			name:        fmt.Sprintf("%d", i),
+			name:        "Lover " + fmt.Sprintf("%d", i),
 			points:      points,
 			headPoint:   (headPoint + 1) % 3,
 			guessPoints: guessPoints,
 		})
 	}
+	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
+	gameMode = modeMatch
+	lastMatch = -1
+	matches = make([]match, 0)
 }
 
 func update(screen *ebiten.Image) error {
 	ebiten.SetScreenScale(1.5)
 
-	handleDrag()
-	handleQuestions()
-	handleNextPrevious()
+	switch gameMode {
+	case modeTitle:
+		handleStart()
+		drawTitle(screen)
+	case modeGuess:
+		handleDrag()
+		handleQuestions()
+		handleNextPrevious()
 
-	drawMatchChart(screen, width-180, height-120, currentLover.guessPoints)
-	drawTrianglover(screen, currentLover)
-	drawQuestions(screen)
-	drawAnswer(screen)
-	drawNextPrevious(screen)
+		drawMatchChart(screen, width-180, height-120, currentLover.guessPoints, true)
+		drawTrianglover(screen, currentLover)
+		drawQuestions(screen)
+		drawAnswer(screen)
+		drawNextPrevious(screen)
+	case modeMatch:
+		handleMatch()
+		drawMatchPage(screen)
+	case modeResult:
+	}
 
 	return nil
 }
