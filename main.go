@@ -49,6 +49,7 @@ var hexLabels = []string{
 var dragPoints [3]*dragPoint
 var dragTargets []vertex
 var currentLover *trianglover
+var currentLoverIndex int
 var hoverQuestion int
 var currentQuestion int
 
@@ -265,7 +266,7 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 }
 
 func drawQuestions(screen *ebiten.Image) {
-	drawPolygonLine(screen, 2, color.White, []vertex{{400, 20}, {780, 20}, {780, 400}, {400, 400}})
+	drawPolygonLine(screen, 2, color.White, []vertex{{400, 20}, {780, 20}, {780, 300}, {400, 300}})
 	x := 410
 	y := 42
 	for i, q := range questions {
@@ -297,6 +298,35 @@ func handleQuestions() {
 			break
 		}
 	}
+}
+
+func handleNextPrevious() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	mouseX, mouseY := ebiten.CursorPosition()
+	if mouseX <= 510 && mouseX >= 400 && mouseY <= 350 && mouseY >= 310 {
+		if currentLoverIndex > 0 {
+			currentLoverIndex--
+			currentLover = trianglovers[currentLoverIndex]
+			currentQuestion = -1
+			hoverQuestion = -1
+		}
+	} else if mouseX <= 780 && mouseX >= 690 && mouseY <= 350 && mouseY >= 310 {
+		if currentLoverIndex < len(trianglovers)-1 {
+			currentLoverIndex++
+			currentLover = trianglovers[currentLoverIndex]
+			currentQuestion = -1
+			hoverQuestion = -1
+		}
+	}
+}
+
+func drawNextPrevious(screen *ebiten.Image) {
+	drawPolygonLine(screen, 2, color.White, []vertex{{400, 310}, {510, 310}, {510, 350}, {400, 350}})
+	text.Draw(screen, "Previous Lover", defaultFont, 410, 335, color.White)
+	drawPolygonLine(screen, 2, color.White, []vertex{{690, 310}, {780, 310}, {780, 350}, {690, 350}})
+	text.Draw(screen, "Next Lover", defaultFont, 700, 335, color.White)
 }
 
 func drawAnswer(screen *ebiten.Image) {
@@ -378,35 +408,43 @@ func init() {
 			},
 		})
 	}
-	log.Printf("%+v", questions)
 	currentQuestion = -1
 	hoverQuestion = -1
+	trianglovers = make([]*trianglover, 0)
+	for i := 0; i < 5; i++ {
+		points := [3]int{
+			rand.Intn(34),
+			rand.Intn(34) + 34,
+			rand.Intn(34) + 68,
+		}
+		headPoint := rand.Intn(3)
+		trianglovers = append(trianglovers, &trianglover{
+			name:      fmt.Sprintf("%d", i),
+			points:    points,
+			headPoint: headPoint,
+		})
+		trianglovers = append(trianglovers, &trianglover{
+			name:      fmt.Sprintf("%d", i),
+			points:    points,
+			headPoint: (headPoint + 1) % 3,
+		})
+	}
+	currentLover = trianglovers[0]
+	currentLoverIndex = 0
 }
 
 func update(screen *ebiten.Image) error {
 	ebiten.SetScreenScale(1.5)
-	if trianglovers == nil {
-		trianglovers = make([]*trianglover, 0)
-		for i := 0; i < 10; i++ {
-			trianglovers = append(trianglovers, &trianglover{
-				name: fmt.Sprintf("%d", i),
-				points: [3]int{
-					rand.Intn(34),
-					rand.Intn(34) + 34,
-					rand.Intn(34) + 68,
-				},
-				headPoint: rand.Intn(3),
-			})
-		}
-		currentLover = trianglovers[0]
-	}
 
 	handleDrag()
 	handleQuestions()
+	handleNextPrevious()
+
 	drawMatchChart(screen, width-180, height-120, currentLover.points)
 	drawTrianglover(screen, currentLover)
 	drawQuestions(screen)
 	drawAnswer(screen)
+	drawNextPrevious(screen)
 
 	return nil
 }
