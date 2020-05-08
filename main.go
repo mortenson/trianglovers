@@ -235,7 +235,7 @@ func handleDrag() {
 		if closestID == -1 {
 			continue
 		}
-		currentLover.points[pointID] = closestID
+		currentLover.guessPoints[pointID] = closestID
 	}
 }
 
@@ -366,14 +366,6 @@ func init() {
 	})
 	dragTargets = []vertex{}
 	dragPoints = [3]*dragPoint{{}, {}, {}}
-	hexPoints := map[string]int{
-		"COMFORT":    0,
-		"WEALTH":     17,
-		"ADVENTURE":  34,
-		"EXCITEMENT": 51,
-		"ROMANCE":    68,
-		"FAMILY":     85,
-	}
 	fixRanges := func(ranges [][2]int) [][2]int {
 		for i := range ranges {
 			for j := range ranges[i] {
@@ -387,22 +379,33 @@ func init() {
 		return ranges
 	}
 	questions = []question{}
-	for label, hexPoint := range hexPoints {
+	hexPoints := []struct {
+		ID    string
+		point int
+	}{
+		{"COMFORT", 0},
+		{"WEALTH", 17},
+		{"ADVENTURE", 34},
+		{"EXCITEMENT", 51},
+		{"ROMANCE", 68},
+		{"FAMILY", 85},
+	}
+	for _, hexPoint := range hexPoints {
 		questions = append(questions, question{
-			ID: label + "_A",
+			ID: hexPoint.ID + "_A",
 			answers: []answer{
 				{
-					ID: label + "_A_STRONG",
+					ID: hexPoint.ID + "_A_STRONG",
 					ranges: fixRanges([][2]int{
-						{hexPoint - 8, hexPoint - 1},
-						{hexPoint, hexPoint + 8},
+						{hexPoint.point - 8, hexPoint.point - 1},
+						{hexPoint.point, hexPoint.point + 8},
 					}),
 				},
 				{
-					ID: label + "_A_NORMAL",
+					ID: hexPoint.ID + "_A_NORMAL",
 					ranges: fixRanges([][2]int{
-						{hexPoint - 17, hexPoint - 8},
-						{hexPoint + 8, hexPoint + 17},
+						{hexPoint.point - 17, hexPoint.point - 8},
+						{hexPoint.point + 8, hexPoint.point + 17},
 					}),
 				},
 			},
@@ -411,6 +414,11 @@ func init() {
 	currentQuestion = -1
 	hoverQuestion = -1
 	trianglovers = make([]*trianglover, 0)
+	guessPoints := [3]int{
+		0,
+		34,
+		68,
+	}
 	for i := 0; i < 5; i++ {
 		points := [3]int{
 			rand.Intn(34),
@@ -419,14 +427,16 @@ func init() {
 		}
 		headPoint := rand.Intn(3)
 		trianglovers = append(trianglovers, &trianglover{
-			name:      fmt.Sprintf("%d", i),
-			points:    points,
-			headPoint: headPoint,
+			name:        fmt.Sprintf("%d", i),
+			points:      points,
+			headPoint:   headPoint,
+			guessPoints: guessPoints,
 		})
 		trianglovers = append(trianglovers, &trianglover{
-			name:      fmt.Sprintf("%d", i),
-			points:    points,
-			headPoint: (headPoint + 1) % 3,
+			name:        fmt.Sprintf("%d", i),
+			points:      points,
+			headPoint:   (headPoint + 1) % 3,
+			guessPoints: guessPoints,
 		})
 	}
 	currentLover = trianglovers[0]
@@ -440,7 +450,7 @@ func update(screen *ebiten.Image) error {
 	handleQuestions()
 	handleNextPrevious()
 
-	drawMatchChart(screen, width-180, height-120, currentLover.points)
+	drawMatchChart(screen, width-180, height-120, currentLover.guessPoints)
 	drawTrianglover(screen, currentLover)
 	drawQuestions(screen)
 	drawAnswer(screen)
