@@ -83,6 +83,7 @@ var gameMode gameModeType
 var matches []match
 var lastMatch int
 var lastMatchColor color.Color
+var strings map[string]string
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -292,7 +293,6 @@ func drawQuestions(screen *ebiten.Image) {
 	x := 410
 	y := 42
 	for i, q := range questions {
-		questionText := q.ID
 		var clr color.Color
 		if currentQuestion == i {
 			clr = color.RGBA{255, 255, 0, 255}
@@ -301,7 +301,7 @@ func drawQuestions(screen *ebiten.Image) {
 		} else {
 			clr = color.White
 		}
-		text.Draw(screen, questionText, defaultFont, x, y+(i*20), clr)
+		text.Draw(screen, strings[q.ID], defaultFont, x, y+(i*20), clr)
 	}
 }
 
@@ -376,8 +376,7 @@ func drawAnswer(screen *ebiten.Image) {
 	} else {
 		answerID = questions[currentQuestion].ID + "_DEFAULT"
 	}
-	answerText := answerID
-	text.Draw(screen, answerText, defaultFont, 30, 510+12, color.White)
+	text.Draw(screen, strings[answerID], defaultFont, 30, 510+12, color.White)
 }
 
 func handleStart() {
@@ -475,7 +474,7 @@ func drawResult(screen *ebiten.Image) {
 	for i, lover := range trianglovers {
 		x := ((i % 5) * 125) + 100
 		y := (int(i/5) * 125) + 25
-		drawMatchChart(screen, x, y, lover.guessPoints, false)
+		drawMatchChart(screen, x, y, lover.points, false)
 		clr, ok := colormap[lover.points]
 		if !ok {
 			clr = color.White
@@ -587,6 +586,7 @@ func init() {
 	gameMode = modeTitle
 	lastMatch = -1
 	matches = make([]match, 0)
+	strings = getStrings()
 }
 
 func update(screen *ebiten.Image) error {
