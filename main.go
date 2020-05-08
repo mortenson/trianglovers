@@ -426,6 +426,11 @@ func handleMatch() {
 			}
 		}
 	}
+	if mouseX <= 475 && mouseX >= 350 && mouseY <= 550 && mouseY >= 500 {
+		if len(matches) == len(trianglovers)/2 {
+			gameMode = modeResult
+		}
+	}
 }
 
 func drawMatchPage(screen *ebiten.Image) {
@@ -447,6 +452,43 @@ func drawMatchPage(screen *ebiten.Image) {
 		}
 		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
 	}
+	drawPolygonLine(screen, 2, color.White, []vertex{{350, 500}, {475, 500}, {475, 550}, {350, 550}})
+	text.Draw(screen, "Submit matches", defaultFont, 360, 525, color.White)
+}
+
+func drawResult(screen *ebiten.Image) {
+	colors := []color.Color{
+		color.RGBA{255, 0, 0, 255},
+		color.RGBA{0, 255, 0, 255},
+		color.RGBA{0, 0, 255, 255},
+		color.RGBA{255, 255, 0, 255},
+		color.RGBA{0, 255, 255, 255},
+	}
+	colormap := map[[3]int]color.Color{}
+	for _, lover := range trianglovers {
+		_, ok := colormap[lover.points]
+		if ok {
+			continue
+		}
+		colormap[lover.points] = colors[len(colormap)]
+	}
+	for i, lover := range trianglovers {
+		x := ((i % 5) * 125) + 100
+		y := (int(i/5) * 125) + 25
+		drawMatchChart(screen, x, y, lover.guessPoints, false)
+		clr, ok := colormap[lover.points]
+		if !ok {
+			clr = color.White
+		}
+		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
+	}
+	score := 0
+	for _, m := range matches {
+		if trianglovers[m.a].points == trianglovers[m.b].points {
+			score++
+		}
+	}
+	text.Draw(screen, fmt.Sprintf("Score: %d/%d", score, len(matches)), defaultFont, 360, 525, color.White)
 }
 
 func init() {
@@ -568,6 +610,7 @@ func update(screen *ebiten.Image) error {
 		handleMatch()
 		drawMatchPage(screen)
 	case modeResult:
+		drawResult(screen)
 	}
 
 	return nil
