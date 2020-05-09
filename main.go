@@ -185,10 +185,10 @@ func getHexBoundaryPoints(hexPoints []vertex) []vertex {
 func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabels bool) {
 	// Draw hexagon.
 	hexPoints := getHexPoints(x, y)
-	drawPolygon(screen, color.RGBA{255, 0, 0, 255}, hexPoints)
+	drawPolygon(screen, defaultColors["darkPink"], hexPoints)
 	points := getHexBoundaryPoints(hexPoints)
 	// Draw the triangle.
-	drawPolygon(screen, color.White, []vertex{
+	drawPolygon(screen, defaultColors["white"], []vertex{
 		points[prefPoints[0]],
 		points[prefPoints[1]],
 		points[prefPoints[2]],
@@ -214,11 +214,11 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 		if i == 1 || i == 2 {
 			x += 5
 		} else if i == 4 || i == 5 {
-			x -= 7*len(hexLabel) + 5
+			x -= 7*len(hexLabel) + 10
 		} else {
 			x -= (7 * len(hexLabel)) / 2
 		}
-		text.Draw(screen, hexLabel, defaultFont, x, y, color.White)
+		text.Draw(screen, hexLabel, defaultFont, x, y, defaultColors["purple"])
 	}
 	// Add angles (@todo).
 	// a := points[prefPoints[0]]
@@ -299,7 +299,7 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 		vertices[i][0] = scaleX + ((vertices[i][0] - scaleX) * scale)
 		vertices[i][1] = scaleY + ((vertices[i][1] - scaleY) * scale)
 	}
-	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["white"], vertices)
+	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["pink"], vertices)
 }
 
 func drawQuestions(screen *ebiten.Image) {
