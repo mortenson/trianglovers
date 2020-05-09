@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/color"
 	_ "image/png"
-	"log"
 	"math"
 	"math/rand"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/text"
 	"github.com/hajimehoshi/ebiten/vector"
@@ -90,7 +88,9 @@ var lastMatch int
 var lastMatchColor color.Color
 var strings map[string]string
 var files map[string][]byte
+var fontFiles map[string]*truetype.Font
 var imageFiles map[string]*ebiten.Image
+var defaultColors map[string]color.Color
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -394,10 +394,10 @@ func handleStart() {
 }
 
 func drawTitle(screen *ebiten.Image) {
-	title := "TRIANGLOVERS"
-	text.Draw(screen, title, largeFont, (width/2)-((len(title)*30)/2), (height/2)-45, color.White)
-	button := "START"
-	text.Draw(screen, button, largeFont, (width/2)-((len(button)*30)/2), (height/2)+45, color.RGBA{255, 0, 0, 255})
+	title := "Trianglovers"
+	text.Draw(screen, title, largeFont, (width/2)-((len(title)*20)/2), (height/2)-45, defaultColors["purple"])
+	button := "Click to start"
+	text.Draw(screen, button, largeFont, (width/2)-((len(button)*15)/2), (height/2)+45, defaultColors["purple"])
 }
 
 func handleMatch() {
@@ -498,16 +498,13 @@ func drawResult(screen *ebiten.Image) {
 }
 
 func init() {
-	tt, err := truetype.Parse(fonts.MPlus1pRegular_ttf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defaultFont = truetype.NewFace(tt, &truetype.Options{
+	loadFiles()
+	defaultFont = truetype.NewFace(fontFiles["Jost-Medium.ttf"], &truetype.Options{
 		Size:    12,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
-	largeFont = truetype.NewFace(tt, &truetype.Options{
+	largeFont = truetype.NewFace(fontFiles["LobsterTwo-Italic.ttf"], &truetype.Options{
 		Size:    45,
 		DPI:     72,
 		Hinting: font.HintingFull,
@@ -594,18 +591,26 @@ func init() {
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
+	defaultColors = map[string]color.Color{
+		"darkPink": color.RGBA{245, 128, 193, 255},
+		"pink":     color.RGBA{255, 187, 225, 255},
+		"purple":   color.RGBA{175, 58, 141, 255},
+		"white":    color.RGBA{255, 241, 241, 255},
+	}
 }
 
 func loadFiles() {
 	files = make(map[string][]byte, 0)
 	imageFiles = make(map[string]*ebiten.Image, 0)
+	fontFiles = make(map[string]*truetype.Font, 0)
 	packrBox := packr.NewBox("./assets")
 	for _, f := range packrBox.List() {
 		b, err := packrBox.Find(f)
 		if err != nil {
 			panic(err)
 		}
-		if filepath.Ext(f) == ".png" {
+		switch filepath.Ext(f) {
+		case ".png":
 			img, _, err := image.Decode(bytes.NewReader(b))
 			if err != nil {
 				panic(err)
@@ -615,7 +620,13 @@ func loadFiles() {
 				panic(err)
 			}
 			imageFiles[f] = eimg
-		} else {
+		case ".ttf":
+			ttf, err := truetype.Parse(b)
+			if err != nil {
+				panic(err)
+			}
+			fontFiles[f] = ttf
+		default:
 			files[f] = b
 		}
 	}
@@ -623,6 +634,10 @@ func loadFiles() {
 
 func update(screen *ebiten.Image) error {
 	ebiten.SetScreenScale(1.5)
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(0, 0)
+	screen.DrawImage(imageFiles["background.png"], op)
 
 	switch gameMode {
 	case modeTitle:
@@ -649,7 +664,6 @@ func update(screen *ebiten.Image) error {
 }
 
 func main() {
-	loadFiles()
 	rand.Seed(time.Now().UnixNano())
 	if err := ebiten.Run(update, width, height, 2, "Trianglovers"); err != nil {
 		panic(err)
