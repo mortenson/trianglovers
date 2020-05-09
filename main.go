@@ -117,6 +117,11 @@ func drawPolygonLine(screen *ebiten.Image, width float64, borderColor color.Colo
 	centerX = centerX / len(coordinates)
 	centerY = centerY / len(coordinates)
 	for i := range coordinates {
+		if width < 1 {
+			coordinates[i][0] = centerX + int(float64(coordinates[i][0]-centerX)*width)
+			coordinates[i][1] = centerY + int(float64(coordinates[i][1]-centerY)*width)
+			continue
+		}
 		offsetX := width
 		offsetY := width
 		if coordinates[i][0] > centerX {
@@ -294,7 +299,7 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 		vertices[i][0] = scaleX + ((vertices[i][0] - scaleX) * scale)
 		vertices[i][1] = scaleY + ((vertices[i][1] - scaleY) * scale)
 	}
-	drawPolygon(screen, defaultColors["white"], vertices)
+	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["white"], vertices)
 }
 
 func drawQuestions(screen *ebiten.Image) {
