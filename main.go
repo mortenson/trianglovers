@@ -39,6 +39,7 @@ type trianglover struct {
 type dragPoint struct {
 	position vertex
 	dragging bool
+	hovering bool
 }
 
 type answer struct {
@@ -199,6 +200,14 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 	dragPoints[0].position = points[prefPoints[0]]
 	dragPoints[1].position = points[prefPoints[1]]
 	dragPoints[2].position = points[prefPoints[2]]
+	// Draw hovered drag points.
+	for _, point := range dragPoints {
+		if point.hovering {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(point.position[0]-10), float64(point.position[1]-10))
+			screen.DrawImage(imageFiles["dragcursor.png"], op)
+		}
+	}
 	// Add labels.
 	if !drawLabels {
 		return
@@ -238,12 +247,14 @@ func handleDrag() {
 			point.dragging = false
 		}
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		for _, point := range dragPoints {
-			if distance(point.position, vertex{mouseX, mouseY}) < 10 {
+	for _, point := range dragPoints {
+		if distance(point.position, vertex{mouseX, mouseY}) < 10 {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 				point.dragging = true
-				break
 			}
+			point.hovering = true
+		} else if !point.dragging {
+			point.hovering = false
 		}
 	}
 	for pointID, point := range dragPoints {
