@@ -106,8 +106,8 @@ func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	})
 }
 
-func drawPolygonLine(screen *ebiten.Image, width float64, clr color.Color, coordinates []vertex) {
-	drawPolygon(screen, clr, coordinates)
+func drawPolygonLine(screen *ebiten.Image, width float64, borderColor color.Color, fillColor color.Color, coordinates []vertex) {
+	drawPolygon(screen, borderColor, coordinates)
 	centerX := 0
 	centerY := 0
 	for i := range coordinates {
@@ -128,7 +128,7 @@ func drawPolygonLine(screen *ebiten.Image, width float64, clr color.Color, coord
 		coordinates[i][0] = centerX + int(float64(coordinates[i][0]-centerX)+offsetX)
 		coordinates[i][1] = centerY + int(float64(coordinates[i][1]-centerY)+offsetY)
 	}
-	drawPolygon(screen, color.Black, coordinates)
+	drawPolygon(screen, fillColor, coordinates)
 }
 
 func distance(p1, p2 vertex) float64 {
@@ -294,23 +294,23 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 		vertices[i][0] = scaleX + ((vertices[i][0] - scaleX) * scale)
 		vertices[i][1] = scaleY + ((vertices[i][1] - scaleY) * scale)
 	}
-	drawPolygon(screen, color.White, vertices)
+	drawPolygon(screen, defaultColors["white"], vertices)
 }
 
 func drawQuestions(screen *ebiten.Image) {
-	drawPolygonLine(screen, 2, color.White, []vertex{{400, 20}, {780, 20}, {780, 300}, {400, 300}})
+	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 20}, {780, 20}, {780, 300}, {400, 300}})
 	x := 410
 	y := 42
 	for i, q := range questions {
 		var clr color.Color
 		if currentQuestion == i {
-			clr = color.RGBA{255, 255, 0, 255}
+			clr = defaultColors["darkPink"]
 		} else if hoverQuestion == i {
-			clr = color.RGBA{255, 0, 0, 255}
+			clr = defaultColors["darkPink"]
 		} else {
-			clr = color.White
+			clr = defaultColors["purple"]
 		}
-		text.Draw(screen, strings[q.ID], defaultFont, x, y+(i*20), clr)
+		text.Draw(screen, strings[q.ID], defaultFont, x, y+(i*25), clr)
 	}
 }
 
@@ -319,7 +319,7 @@ func handleQuestions() {
 	y := 42
 	hoverQuestion = -1
 	for i := range questions {
-		qY := y + (i * 20)
+		qY := y + (i * 25)
 		if mouseX >= 410 && mouseX <= 780 && mouseY <= qY && mouseY >= qY-12 {
 			if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 				currentQuestion = i
@@ -335,37 +335,59 @@ func handleNextPrevious() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
 	}
-	mouseX, mouseY := ebiten.CursorPosition()
-	if mouseX <= 510 && mouseX >= 400 && mouseY <= 350 && mouseY >= 310 {
+	if isButtonColliding("Previous Lover", 400, 335) {
 		if currentLoverIndex > 0 {
 			currentLoverIndex--
 			currentLover = trianglovers[currentLoverIndex]
 			currentQuestion = -1
 			hoverQuestion = -1
 		}
-	} else if mouseX <= 610 && mouseX >= 530 && mouseY <= 350 && mouseY >= 310 {
+	} else if isButtonColliding("Next Lover", 530, 335) {
 		if currentLoverIndex < len(trianglovers)-1 {
 			currentLoverIndex++
 			currentLover = trianglovers[currentLoverIndex]
 			currentQuestion = -1
 			hoverQuestion = -1
 		}
-	} else if mouseX <= 780 && mouseX >= 690 && mouseY <= 350 && mouseY >= 310 {
+	} else if currentLoverIndex == len(trianglovers)-1 && isButtonColliding("Match!", 710, 335) {
 		gameMode = modeMatch
 	}
 }
 
+func getButtonBounds(buttonText string, x, y int) []vertex {
+	width := getTextWidth(buttonText, defaultFont)
+	return []vertex{{x, y}, {x + width + 20, y}, {x + width + 20, y + 40}, {x, y + 40}}
+}
+
+func isMouseColliding(x, y, width, height int) bool {
+	mouseX, mouseY := ebiten.CursorPosition()
+	return mouseX >= x && mouseX <= x+width && mouseY >= y && mouseY <= y+height
+}
+
+func isButtonColliding(buttonText string, x, y int) bool {
+	bounds := getButtonBounds(buttonText, x, y)
+	return isMouseColliding(x, y, bounds[2][0]-x, bounds[2][1]-y)
+}
+
+func drawButton(screen *ebiten.Image, buttonText string, x, y int) {
+	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], getButtonBounds(buttonText, x, y))
+	clr := defaultColors["purple"]
+	if isButtonColliding(buttonText, x, y) {
+		clr = defaultColors["darkPink"]
+	}
+	text.Draw(screen, buttonText, defaultFont, x+10, y+25, clr)
+}
+
 func drawNextPrevious(screen *ebiten.Image) {
-	drawPolygonLine(screen, 2, color.White, []vertex{{400, 310}, {510, 310}, {510, 350}, {400, 350}})
-	text.Draw(screen, "Previous Lover", defaultFont, 410, 335, color.White)
-	drawPolygonLine(screen, 2, color.White, []vertex{{520, 310}, {610, 310}, {610, 350}, {520, 350}})
-	text.Draw(screen, "Next Lover", defaultFont, 530, 335, color.White)
-	drawPolygonLine(screen, 2, color.White, []vertex{{690, 310}, {780, 310}, {780, 350}, {690, 350}})
-	text.Draw(screen, "Match!", defaultFont, 710, 335, color.White)
+	drawButton(screen, "Previous Lover", 400, 335)
+	drawButton(screen, "Next Lover", 530, 335)
+	if currentLoverIndex == len(trianglovers)-1 {
+		drawButton(screen, "Match!", 710, 335)
+	}
 }
 
 func drawAnswer(screen *ebiten.Image) {
-	drawPolygonLine(screen, 2, color.White, []vertex{{20, 500}, {500, 500}, {500, 580}, {20, 580}})
+	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{20, 500}, {500, 500}, {500, 580}, {20, 580}})
 	if currentQuestion == -1 {
 		return
 	}
@@ -385,7 +407,7 @@ func drawAnswer(screen *ebiten.Image) {
 	} else {
 		answerID = questions[currentQuestion].ID + "_DEFAULT"
 	}
-	text.Draw(screen, strings[answerID], defaultFont, 30, 510+12, color.White)
+	text.Draw(screen, strings[answerID], defaultFont, 30, 510+12, defaultColors["purple"])
 }
 
 func handleStart() {
@@ -477,7 +499,7 @@ func drawMatchPage(screen *ebiten.Image) {
 		}
 		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
 	}
-	drawPolygonLine(screen, 2, color.White, []vertex{{350, 500}, {475, 500}, {475, 550}, {350, 550}})
+	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{350, 500}, {475, 500}, {475, 550}, {350, 550}})
 	text.Draw(screen, "Submit matches", defaultFont, 360, 525, color.White)
 }
 
@@ -518,8 +540,8 @@ func drawResult(screen *ebiten.Image) {
 
 func init() {
 	loadFiles()
-	defaultFont = truetype.NewFace(fontFiles["Jost-Medium.ttf"], &truetype.Options{
-		Size:    12,
+	defaultFont = truetype.NewFace(fontFiles["Archivo-SemiBold.ttf"], &truetype.Options{
+		Size:    14,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -606,7 +628,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeTitle
+	gameMode = modeGuess
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
