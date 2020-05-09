@@ -303,9 +303,10 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 }
 
 func drawQuestions(screen *ebiten.Image) {
-	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 20}, {780, 20}, {780, 300}, {400, 300}})
+	text.Draw(screen, "Ask a question", largeFont, 400, 70, defaultColors["purple"])
+	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 100}, {780, 100}, {780, 325}, {400, 325}})
 	x := 410
-	y := 42
+	y := 122
 	for i, q := range questions {
 		var clr color.Color
 		if currentQuestion == i {
@@ -321,7 +322,7 @@ func drawQuestions(screen *ebiten.Image) {
 
 func handleQuestions() {
 	mouseX, mouseY := ebiten.CursorPosition()
-	y := 42
+	y := 122
 	hoverQuestion = -1
 	for i := range questions {
 		qY := y + (i * 25)
