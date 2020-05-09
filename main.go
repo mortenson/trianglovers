@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"golang.org/x/image/math/fixed"
+
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
@@ -393,11 +395,28 @@ func handleStart() {
 	gameMode = modeGuess
 }
 
+func getTextWidth(text string, face font.Face) int {
+	width := fixed.I(0)
+	prevR := rune(-1)
+	for _, r := range []rune(text) {
+		if prevR >= 0 {
+			width += face.Kern(prevR, r)
+		}
+		a, ok := face.GlyphAdvance(r)
+		if !ok {
+			panic("Unable to determine glyph width")
+		}
+		width += a
+		prevR = r
+	}
+	return width.Round()
+}
+
 func drawTitle(screen *ebiten.Image) {
 	title := "Trianglovers"
-	text.Draw(screen, title, largeFont, (width/2)-((len(title)*20)/2), (height/2)-45, defaultColors["purple"])
+	text.Draw(screen, title, largeFont, (width/2)-(getTextWidth(title, largeFont)/2), (height/2)-45, defaultColors["purple"])
 	button := "Click to start"
-	text.Draw(screen, button, largeFont, (width/2)-((len(button)*15)/2), (height/2)+45, defaultColors["purple"])
+	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+45, defaultColors["purple"])
 }
 
 func handleMatch() {
