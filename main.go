@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"image"
 	"image/color"
+	_ "image/png"
 	"log"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"time"
 
+	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
@@ -84,6 +89,8 @@ var matches []match
 var lastMatch int
 var lastMatchColor color.Color
 var strings map[string]string
+var files map[string][]byte
+var imageFiles map[string]*ebiten.Image
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -589,6 +596,31 @@ func init() {
 	strings = getStrings()
 }
 
+func loadFiles() {
+	files = make(map[string][]byte, 0)
+	imageFiles = make(map[string]*ebiten.Image, 0)
+	packrBox := packr.NewBox("./assets")
+	for _, f := range packrBox.List() {
+		b, err := packrBox.Find(f)
+		if err != nil {
+			panic(err)
+		}
+		if filepath.Ext(f) == ".png" {
+			img, _, err := image.Decode(bytes.NewReader(b))
+			if err != nil {
+				panic(err)
+			}
+			eimg, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+			if err != nil {
+				panic(err)
+			}
+			imageFiles[f] = eimg
+		} else {
+			files[f] = b
+		}
+	}
+}
+
 func update(screen *ebiten.Image) error {
 	ebiten.SetScreenScale(1.5)
 
@@ -617,6 +649,7 @@ func update(screen *ebiten.Image) error {
 }
 
 func main() {
+	loadFiles()
 	rand.Seed(time.Now().UnixNano())
 	if err := ebiten.Run(update, width, height, 2, "Trianglovers"); err != nil {
 		panic(err)
