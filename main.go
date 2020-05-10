@@ -316,6 +316,8 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 		}
 	}
 	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["pink"], vertices)
+	// Draw name.
+	text.Draw(screen, lover.name, titleFont, 25, 70, defaultColors["purple"])
 	// Draw face.
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(25, 175)
@@ -348,7 +350,7 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 }
 
 func drawQuestions(screen *ebiten.Image) {
-	text.Draw(screen, "Ask a question", largeFont, 400, 70, defaultColors["purple"])
+	text.Draw(screen, "Ask a question", largeFont, 400, 85, defaultColors["purple"])
 	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 100}, {780, 100}, {780, 325}, {400, 325}})
 	x := 410
 	y := 122
@@ -661,6 +663,19 @@ func init() {
 		34,
 		68,
 	}
+	defaultNames := []string{
+		"Digree",
+		"Acutie",
+		"Equilaten",
+		"Hypotenate",
+		"Obtussey",
+		"Isos",
+		"Petagorean",
+		"Scaley",
+		"Vert",
+		"Anglea",
+	}
+	rand.Shuffle(len(defaultNames), func(i, j int) { defaultNames[i], defaultNames[j] = defaultNames[j], defaultNames[i] })
 	for i := 0; i < 5; i++ {
 		points := [3]int{
 			rand.Intn(34),
@@ -669,13 +684,13 @@ func init() {
 		}
 		headPoint := rand.Intn(3)
 		trianglovers = append(trianglovers, &trianglover{
-			name:        "Lover " + fmt.Sprintf("%d", i),
+			name:        defaultNames[i],
 			points:      points,
 			headPoint:   headPoint,
 			guessPoints: guessPoints,
 		})
 		trianglovers = append(trianglovers, &trianglover{
-			name:        "Lover " + fmt.Sprintf("%d", i),
+			name:        defaultNames[i+4],
 			points:      points,
 			headPoint:   (headPoint + 1) % 3,
 			guessPoints: guessPoints,
@@ -684,7 +699,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeGuess
+	gameMode = modeTitle
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
