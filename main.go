@@ -306,11 +306,47 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	scaleX := vertices[0][0]
 	scaleY := vertices[0][1]
 	scale := 2
+	lowestY := -1
+	lowestX := -1
 	for i := range vertices {
 		vertices[i][0] = scaleX + ((vertices[i][0] - scaleX) * scale)
 		vertices[i][1] = scaleY + ((vertices[i][1] - scaleY) * scale)
+		if lowestY == -1 || vertices[i][1] < lowestY {
+			lowestY = vertices[i][1]
+		}
+		if lowestX == -1 || vertices[i][0] < lowestX {
+			lowestX = vertices[i][0]
+		}
+	}
+	// Move triangles to consistent coordinates.
+	yDiff := 150 - lowestY
+	xDiff := 50 - lowestX
+	highestX := -1
+	for i := range vertices {
+		vertices[i][1] += yDiff
+		vertices[i][0] += xDiff
+		if highestX == -1 || vertices[i][0] > highestX {
+			highestX = vertices[i][0]
+		}
 	}
 	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["pink"], vertices)
+	// Draw face.
+	eyeWidth := 50
+	eyeInnerWidth := 18
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(25, 175)
+	screen.DrawImage(imageFiles["eyeball.png"], op)
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(25+float64((eyeWidth/2)-(eyeInnerWidth/2)), 175+float64((eyeWidth/2)-(eyeInnerWidth/2)))
+	screen.DrawImage(imageFiles["eyeinner.png"], op)
+	op = &ebiten.DrawImageOptions{}
+	eye2X := float64(highestX - 25)
+	op.GeoM.Translate(eye2X, 175)
+	screen.DrawImage(imageFiles["eyeball.png"], op)
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(eye2X+float64((eyeWidth/2)-(eyeInnerWidth/2)), 175+float64((eyeWidth/2)-(eyeInnerWidth/2)))
+	screen.DrawImage(imageFiles["eyeinner.png"], op)
+
 }
 
 func drawQuestions(screen *ebiten.Image) {
