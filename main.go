@@ -773,6 +773,8 @@ func update(screen *ebiten.Image) error {
 	op.GeoM.Translate(0, 0)
 	screen.DrawImage(imageFiles["background.png"], op)
 
+	//ebitenutil.DebugPrint(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()))
+
 	switch gameMode {
 	case modeTitle:
 		handleStart()
