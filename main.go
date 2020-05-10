@@ -70,6 +70,7 @@ const (
 var trianglovers []*trianglover
 var defaultFont font.Face
 var largeFont font.Face
+var titleFont font.Face
 var hexLabels = []string{
 	"Comfort",
 	"Wealth",
@@ -143,15 +144,6 @@ func distance(p1, p2 vertex) float64 {
 	return math.Sqrt(first + second)
 }
 
-func angle(p1, p2, p3 vertex) float64 {
-	radians := math.Atan2(float64(p3[1]-p1[1]), float64(p3[0]-p1[0])) - math.Atan2(float64(p2[1]-p1[1]), float64(p2[0]-p1[0]))
-	degrees := radians * 180 / math.Pi
-	if degrees > 0 {
-		return degrees
-	}
-	return 360 + degrees
-}
-
 func getHexPoints(x, y int) []vertex {
 	return []vertex{
 		{50 + x, 0 + y},
@@ -183,10 +175,10 @@ func getHexBoundaryPoints(hexPoints []vertex) []vertex {
 	return points
 }
 
-func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabels bool) {
+func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabels bool, clr color.Color) {
 	// Draw hexagon.
 	hexPoints := getHexPoints(x, y)
-	drawPolygon(screen, defaultColors["darkPink"], hexPoints)
+	drawPolygon(screen, clr, hexPoints)
 	points := getHexBoundaryPoints(hexPoints)
 	// Draw the triangle.
 	drawPolygon(screen, defaultColors["white"], []vertex{
@@ -229,15 +221,6 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 		}
 		text.Draw(screen, hexLabel, defaultFont, x, y, defaultColors["purple"])
 	}
-	// Add angles (@todo).
-	// a := points[prefPoints[0]]
-	// b := points[prefPoints[1]]
-	// c := points[prefPoints[2]]
-	// A := angle(a, b, c)
-	// B := angle(b, c, a)
-	// C := angle(c, a, b)
-	// text.Draw(screen, fmt.Sprintf("%+v %+v %+v", points[prefPoints[0]], points[prefPoints[1]], points[prefPoints[2]]), defaultFont, 12, 12, color.White)
-	// text.Draw(screen, fmt.Sprintf("A: %f B: %f C: %f", A, B, C), defaultFont, 12, 24, color.White)
 }
 
 func handleDrag() {
@@ -504,9 +487,9 @@ func getTextWidth(text string, face font.Face) int {
 
 func drawTitle(screen *ebiten.Image) {
 	title := "Trianglovers"
-	text.Draw(screen, title, largeFont, (width/2)-(getTextWidth(title, largeFont)/2), (height/2)-45, defaultColors["purple"])
+	text.Draw(screen, title, titleFont, (width/2)-(getTextWidth(title, titleFont)/2), (height/2)-45, defaultColors["purple"])
 	button := "Click to start"
-	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+45, defaultColors["purple"])
+	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+60, defaultColors["purple"])
 }
 
 func handleMatch() {
@@ -516,7 +499,7 @@ func handleMatch() {
 	mouseX, mouseY := ebiten.CursorPosition()
 	for i := range trianglovers {
 		x := ((i % 5) * 125) + 100
-		y := (int(i/5) * 125) + 25
+		y := (int(i/5) * 125) + 100
 		width := 100
 		height := 100
 		if mouseX <= x+width && mouseX >= x && mouseY <= y+height && mouseY >= y {
@@ -541,7 +524,7 @@ func handleMatch() {
 			}
 		}
 	}
-	if mouseX <= 475 && mouseX >= 350 && mouseY <= 550 && mouseY >= 500 {
+	if isButtonColliding("Submit matches!", 350, 400) {
 		if len(matches) == len(trianglovers)/2 {
 			gameMode = modeResult
 		}
@@ -549,6 +532,8 @@ func handleMatch() {
 }
 
 func drawMatchPage(screen *ebiten.Image) {
+	title := "Match the lovers"
+	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 75, defaultColors["purple"])
 	colormap := map[int]color.Color{}
 	for _, m := range matches {
 		colormap[m.a] = m.color
@@ -556,28 +541,29 @@ func drawMatchPage(screen *ebiten.Image) {
 	}
 	for i, lover := range trianglovers {
 		x := ((i % 5) * 125) + 100
-		y := (int(i/5) * 125) + 25
-		drawMatchChart(screen, x, y, lover.guessPoints, false)
+		y := (int(i/5) * 125) + 100
 		clr, ok := colormap[i]
 		if !ok {
-			clr = color.White
+			clr = defaultColors["darkPink"]
 		}
 		if lastMatch == i {
 			clr = lastMatchColor
 		}
-		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
+		drawMatchChart(screen, x, y, lover.guessPoints, false, clr)
+		text.Draw(screen, lover.name, defaultFont, x, y+110, defaultColors["purple"])
 	}
-	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{350, 500}, {475, 500}, {475, 550}, {350, 550}})
-	text.Draw(screen, "Submit matches", defaultFont, 360, 525, color.White)
+	if len(matches) == len(trianglovers)/2 {
+		drawButton(screen, "Submit matches!", 350, 400)
+	}
 }
 
 func drawResult(screen *ebiten.Image) {
 	colors := []color.Color{
-		color.RGBA{255, 0, 0, 255},
-		color.RGBA{0, 255, 0, 255},
-		color.RGBA{0, 0, 255, 255},
-		color.RGBA{255, 255, 0, 255},
-		color.RGBA{0, 255, 255, 255},
+		color.RGBA{41, 237, 255, 255}, // blue
+		color.RGBA{57, 255, 137, 255}, // green
+		color.RGBA{255, 159, 44, 255}, // orange
+		color.RGBA{255, 92, 113, 255}, // red
+		color.RGBA{255, 92, 251, 255}, // purple
 	}
 	colormap := map[[3]int]color.Color{}
 	for _, lover := range trianglovers {
@@ -590,12 +576,12 @@ func drawResult(screen *ebiten.Image) {
 	for i, lover := range trianglovers {
 		x := ((i % 5) * 125) + 100
 		y := (int(i/5) * 125) + 25
-		drawMatchChart(screen, x, y, lover.points, false)
 		clr, ok := colormap[lover.points]
 		if !ok {
-			clr = color.White
+			clr = defaultColors["darkPink"]
 		}
-		text.Draw(screen, lover.name, defaultFont, x, y+110, clr)
+		drawMatchChart(screen, x, y, lover.points, false, clr)
+		text.Draw(screen, lover.name, defaultFont, x, y+110, defaultColors["purple"])
 	}
 	score := 0
 	for _, m := range matches {
@@ -603,7 +589,10 @@ func drawResult(screen *ebiten.Image) {
 			score++
 		}
 	}
-	text.Draw(screen, fmt.Sprintf("Score: %d/%d", score, len(matches)), defaultFont, 360, 525, color.White)
+	title := fmt.Sprintf("Correct matches: %d/%d", score, len(matches))
+	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 350, defaultColors["purple"])
+	title = "Thanks for playing!"
+	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 425, defaultColors["purple"])
 }
 
 func init() {
@@ -615,6 +604,11 @@ func init() {
 	})
 	largeFont = truetype.NewFace(fontFiles["LobsterTwo-Italic.ttf"], &truetype.Options{
 		Size:    45,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	titleFont = truetype.NewFace(fontFiles["LobsterTwo-Italic.ttf"], &truetype.Options{
+		Size:    60,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -696,7 +690,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeGuess
+	gameMode = modeTitle
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
@@ -758,8 +752,7 @@ func update(screen *ebiten.Image) error {
 		handleDrag()
 		handleQuestions()
 		handleNextPrevious()
-
-		drawMatchChart(screen, width-180, height-120, currentLover.guessPoints, true)
+		drawMatchChart(screen, width-180, height-120, currentLover.guessPoints, true, defaultColors["darkPink"])
 		drawTrianglover(screen, currentLover)
 		drawQuestions(screen)
 		drawAnswer(screen)
