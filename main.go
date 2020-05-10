@@ -287,6 +287,9 @@ func handleDrag() {
 	}
 }
 
+var eyeR float64
+var eyeDirection float64
+
 func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	points := getHexBoundaryPoints(getHexPoints(100, 300))
 	vertices := []vertex{points[lover.points[0]], points[lover.points[1]], points[lover.points[2]]}
@@ -331,22 +334,34 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	}
 	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["pink"], vertices)
 	// Draw face.
-	eyeWidth := 50
-	eyeInnerWidth := 18
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(25, 175)
 	screen.DrawImage(imageFiles["eyeball.png"], op)
+	if eyeR <= 0 || (eyeR < 1.5*math.Pi && rand.Intn(100) > 98) {
+		eyeDirection = 1
+	} else if eyeR >= 2*math.Pi || (eyeR >= 1.5*math.Pi && rand.Intn(100) > 98) {
+		eyeDirection = -1
+	}
+	eyeR += eyeDirection * .02
+	eyeWidth := 50
+	eyeInnerWidth := 18
+	middleOffset := float64((eyeWidth / 2) - (eyeInnerWidth / 2))
+	xOffset := middleOffset + float64(eyeWidth/4)*math.Cos(eyeR)
+	yOffset := middleOffset + float64(eyeWidth/4)*math.Sin(eyeR)
 	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(25+float64((eyeWidth/2)-(eyeInnerWidth/2)), 175+float64((eyeWidth/2)-(eyeInnerWidth/2)))
+	op.GeoM.Translate(25+xOffset, 175+yOffset)
 	screen.DrawImage(imageFiles["eyeinner.png"], op)
 	op = &ebiten.DrawImageOptions{}
 	eye2X := float64(highestX - 25)
 	op.GeoM.Translate(eye2X, 175)
 	screen.DrawImage(imageFiles["eyeball.png"], op)
 	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(eye2X+float64((eyeWidth/2)-(eyeInnerWidth/2)), 175+float64((eyeWidth/2)-(eyeInnerWidth/2)))
+	op.GeoM.Translate(eye2X+xOffset, 175+yOffset)
 	screen.DrawImage(imageFiles["eyeinner.png"], op)
-
+	// Draw mouth.
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(50+(float64(highestX-50)/2)-25, 250)
+	screen.DrawImage(imageFiles["mouth.png"], op)
 }
 
 func drawQuestions(screen *ebiten.Image) {
@@ -691,6 +706,8 @@ func init() {
 		"purple":   color.RGBA{175, 58, 141, 255},
 		"white":    color.RGBA{255, 241, 241, 255},
 	}
+	eyeR = 0
+	eyeDirection = 1
 }
 
 func loadFiles() {
