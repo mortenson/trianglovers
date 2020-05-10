@@ -560,36 +560,27 @@ func drawMatchPage(screen *ebiten.Image) {
 }
 
 func drawResult(screen *ebiten.Image) {
-	colors := []color.Color{
-		color.RGBA{41, 237, 255, 255}, // blue
-		color.RGBA{57, 255, 137, 255}, // green
-		color.RGBA{255, 159, 44, 255}, // orange
-		color.RGBA{255, 92, 113, 255}, // red
-		color.RGBA{255, 92, 251, 255}, // purple
-	}
-	colormap := map[[3]int]color.Color{}
-	for _, lover := range trianglovers {
-		_, ok := colormap[lover.points]
-		if ok {
-			continue
+	score := 0
+	colormap := map[int]color.Color{}
+	for _, m := range matches {
+		if trianglovers[m.a].points == trianglovers[m.b].points {
+			score++
+			colormap[m.a] = color.RGBA{104, 211, 116, 255}
+			colormap[m.b] = colormap[m.a]
+		} else {
+			colormap[m.a] = color.RGBA{223, 90, 117, 255}
+			colormap[m.b] = colormap[m.a]
 		}
-		colormap[lover.points] = colors[len(colormap)]
 	}
 	for i, lover := range trianglovers {
 		x := ((i % 5) * 125) + 100
 		y := (int(i/5) * 125) + 25
-		clr, ok := colormap[lover.points]
+		clr, ok := colormap[i]
 		if !ok {
 			clr = defaultColors["darkPink"]
 		}
 		drawMatchChart(screen, x, y, lover.points, false, clr)
 		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
-	}
-	score := 0
-	for _, m := range matches {
-		if trianglovers[m.a].points == trianglovers[m.b].points {
-			score++
-		}
 	}
 	title := fmt.Sprintf("Correct matches: %d/%d", score, len(matches))
 	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 350, defaultColors["purple"])
