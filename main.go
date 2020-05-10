@@ -589,6 +589,7 @@ func drawResult(screen *ebiten.Image) {
 }
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	loadFiles()
 	defaultFont = truetype.NewFace(fontFiles["Archivo-SemiBold.ttf"], &truetype.Options{
 		Size:    14,
@@ -683,7 +684,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeMatch
+	gameMode = modeGuess
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
@@ -761,7 +762,6 @@ func update(screen *ebiten.Image) error {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	if err := ebiten.Run(update, width, height, 2, "Trianglovers"); err != nil {
 		panic(err)
 	}
