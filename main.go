@@ -496,32 +496,30 @@ func handleMatch() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
 	}
-	mouseX, mouseY := ebiten.CursorPosition()
 	for i := range trianglovers {
 		x := ((i % 5) * 125) + 100
 		y := (int(i/5) * 125) + 100
-		width := 100
-		height := 100
-		if mouseX <= x+width && mouseX >= x && mouseY <= y+height && mouseY >= y {
-			for j, m := range matches {
-				if m.a == i || m.b == i {
-					matches = append(matches[:j], matches[j+1:]...)
-					break
-				}
+		if !isMouseColliding(x, y, 100, 100) {
+			continue
+		}
+		for j, m := range matches {
+			if m.a == i || m.b == i {
+				matches = append(matches[:j], matches[j+1:]...)
+				break
 			}
-			if lastMatch == i {
-				lastMatch = -1
-			} else if lastMatch != -1 {
-				matches = append(matches, match{
-					a:     lastMatch,
-					b:     i,
-					color: lastMatchColor,
-				})
-				lastMatch = -1
-			} else {
-				lastMatch = i
-				lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
-			}
+		}
+		if lastMatch == i {
+			lastMatch = -1
+		} else if lastMatch != -1 {
+			matches = append(matches, match{
+				a:     lastMatch,
+				b:     i,
+				color: lastMatchColor,
+			})
+			lastMatch = -1
+		} else {
+			lastMatch = i
+			lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
 		}
 	}
 	if isButtonColliding("Submit matches!", 350, 400) {
@@ -544,13 +542,17 @@ func drawMatchPage(screen *ebiten.Image) {
 		y := (int(i/5) * 125) + 100
 		clr, ok := colormap[i]
 		if !ok {
-			clr = defaultColors["darkPink"]
+			if isMouseColliding(x, y, 100, 100) {
+				clr = defaultColors["pink"]
+			} else {
+				clr = defaultColors["darkPink"]
+			}
 		}
 		if lastMatch == i {
 			clr = lastMatchColor
 		}
 		drawMatchChart(screen, x, y, lover.guessPoints, false, clr)
-		text.Draw(screen, lover.name, defaultFont, x, y+110, defaultColors["purple"])
+		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
 	}
 	if len(matches) == len(trianglovers)/2 {
 		drawButton(screen, "Submit matches!", 350, 400)
@@ -581,7 +583,7 @@ func drawResult(screen *ebiten.Image) {
 			clr = defaultColors["darkPink"]
 		}
 		drawMatchChart(screen, x, y, lover.points, false, clr)
-		text.Draw(screen, lover.name, defaultFont, x, y+110, defaultColors["purple"])
+		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
 	}
 	score := 0
 	for _, m := range matches {
@@ -592,7 +594,7 @@ func drawResult(screen *ebiten.Image) {
 	title := fmt.Sprintf("Correct matches: %d/%d", score, len(matches))
 	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 350, defaultColors["purple"])
 	title = "Thanks for playing!"
-	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 425, defaultColors["purple"])
+	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 425, defaultColors["purple"])
 }
 
 func init() {
@@ -690,7 +692,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeTitle
+	gameMode = modeMatch
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
