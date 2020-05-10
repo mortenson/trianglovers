@@ -30,10 +30,11 @@ const (
 type vertex [2]int
 
 type trianglover struct {
-	name        string
-	headPoint   int
-	points      [3]int
-	guessPoints [3]int
+	name           string
+	headPoint      int
+	points         [3]int
+	guessPoints    [3]int
+	questionsAsked []int
 }
 
 type dragPoint struct {
@@ -349,14 +350,25 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	screen.DrawImage(imageFiles["mouth.png"], op)
 }
 
+func hasBeenAsked(q int) bool {
+	for _, id := range currentLover.questionsAsked {
+		if q == id {
+			return true
+		}
+	}
+	return false
+}
+
 func drawQuestions(screen *ebiten.Image) {
-	text.Draw(screen, "Ask a question", largeFont, 400, 85, defaultColors["purple"])
+	text.Draw(screen, fmt.Sprintf("Ask a question (%d/4)", len(currentLover.questionsAsked)), largeFont, 400, 85, defaultColors["purple"])
 	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 100}, {780, 100}, {780, 325}, {400, 325}})
 	x := 410
 	y := 122
 	for i, q := range questions {
 		var clr color.Color
-		if currentQuestion == i {
+		if len(currentLover.questionsAsked) >= 4 && !hasBeenAsked(i) {
+			clr = defaultColors["pink"]
+		} else if currentQuestion == i {
 			clr = defaultColors["darkPink"]
 		} else if hoverQuestion == i {
 			clr = defaultColors["darkPink"]
@@ -372,9 +384,15 @@ func handleQuestions() {
 	y := 122
 	hoverQuestion = -1
 	for i := range questions {
+		if len(currentLover.questionsAsked) >= 4 && !hasBeenAsked(i) {
+			continue
+		}
 		qY := y + (i * 25)
 		if mouseX >= 410 && mouseX <= 780 && mouseY <= qY && mouseY >= qY-12 {
 			if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+				if !hasBeenAsked(i) {
+					currentLover.questionsAsked = append(currentLover.questionsAsked, i)
+				}
 				currentQuestion = i
 			} else {
 				hoverQuestion = i
@@ -684,16 +702,18 @@ func init() {
 		}
 		headPoint := rand.Intn(3)
 		trianglovers = append(trianglovers, &trianglover{
-			name:        defaultNames[i],
-			points:      points,
-			headPoint:   headPoint,
-			guessPoints: guessPoints,
+			name:           defaultNames[i],
+			points:         points,
+			headPoint:      headPoint,
+			guessPoints:    guessPoints,
+			questionsAsked: make([]int, 0),
 		})
 		trianglovers = append(trianglovers, &trianglover{
-			name:        defaultNames[i+4],
-			points:      points,
-			headPoint:   (headPoint + 1) % 3,
-			guessPoints: guessPoints,
+			name:           defaultNames[i+4],
+			points:         points,
+			headPoint:      (headPoint + 1) % 3,
+			guessPoints:    guessPoints,
+			questionsAsked: make([]int, 0),
 		})
 	}
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
