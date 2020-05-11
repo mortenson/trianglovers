@@ -96,6 +96,10 @@ var files map[string][]byte
 var fontFiles map[string]*truetype.Font
 var imageFiles map[string]*ebiten.Image
 var defaultColors map[string]color.Color
+var eyeR float64
+var eyeDirection float64
+var loverOffset float64
+var loverDirection float64
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -271,9 +275,6 @@ func handleDrag() {
 	}
 }
 
-var eyeR float64
-var eyeDirection float64
-
 func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	points := getHexBoundaryPoints(getHexPoints(100, 300))
 	vertices := []vertex{points[lover.points[0]], points[lover.points[1]], points[lover.points[2]]}
@@ -308,12 +309,37 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	// Move triangles to consistent coordinates.
 	yDiff := 150 - lowestY
 	xDiff := 50 - lowestX
+	centerX := 0
+	centerY := 0
 	highestX := -1
 	for i := range vertices {
 		vertices[i][1] += yDiff
 		vertices[i][0] += xDiff
+		centerX += vertices[i][0]
+		centerY += vertices[i][1]
 		if highestX == -1 || vertices[i][0] > highestX {
 			highestX = vertices[i][0]
+		}
+	}
+	centerX = centerX / 3
+	centerY = centerY / 3
+	// Animate points.
+	if loverOffset <= 0 {
+		loverDirection = 1
+	} else if loverOffset >= 10 {
+		loverDirection = -1
+	}
+	loverOffset += loverDirection * .2
+	for i := range []int{0, 1} {
+		if vertices[i][0] > centerX {
+			vertices[i][0] += int(loverOffset)
+		} else {
+			vertices[i][0] -= int(loverOffset)
+		}
+		if vertices[i][1] > centerY {
+			vertices[i][1] += int(loverOffset)
+		} else {
+			vertices[i][1] -= int(loverOffset)
 		}
 	}
 	drawPolygonLine(screen, .9, defaultColors["darkPink"], defaultColors["pink"], vertices)
@@ -709,7 +735,7 @@ func init() {
 			questionsAsked: make([]int, 0),
 		})
 		trianglovers = append(trianglovers, &trianglover{
-			name:           defaultNames[i+4],
+			name:           defaultNames[i+5],
 			points:         points,
 			headPoint:      (headPoint + 1) % 3,
 			guessPoints:    guessPoints,
@@ -731,6 +757,8 @@ func init() {
 	}
 	eyeR = 0
 	eyeDirection = 1
+	loverOffset = 0
+	loverDirection = 1
 }
 
 func loadFiles() {
