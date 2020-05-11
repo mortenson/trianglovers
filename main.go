@@ -225,7 +225,15 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 		} else {
 			x -= (7 * len(hexLabel)) / 2
 		}
-		text.Draw(screen, hexLabel, defaultFont, x, y, defaultColors["purple"])
+		clr := defaultColors["purple"]
+		if i < 3 && dragPoints[0].dragging {
+			clr = defaultColors["darkPink"]
+		} else if i > 1 && i < 5 && dragPoints[1].dragging {
+			clr = defaultColors["darkPink"]
+		} else if (i > 3 || i == 0) && dragPoints[2].dragging {
+			clr = defaultColors["darkPink"]
+		}
+		text.Draw(screen, hexLabel, defaultFont, x, y, clr)
 	}
 }
 
