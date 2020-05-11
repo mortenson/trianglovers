@@ -1,12 +1,6 @@
 package main
 
-import (
-	"log"
-	"math/rand"
-)
-
 func getStrings() map[string][]string {
-	log.Print(rand.Intn(1))
 	return map[string][]string{
 		"COMFORT_A": []string{"You're sitting in front of the TV - what chair are you in?"},
 		"COMFORT_A_STRONG": []string{
