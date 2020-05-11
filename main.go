@@ -35,6 +35,7 @@ type trianglover struct {
 	points         [3]int
 	guessPoints    [3]int
 	questionsAsked []int
+	answerIndex    int
 }
 
 type dragPoint struct {
@@ -92,7 +93,7 @@ var gameMode gameModeType
 var matches []match
 var lastMatch int
 var lastMatchColor color.Color
-var strings map[string]string
+var strings map[string][]string
 var files map[string][]byte
 var fontFiles map[string]*truetype.Font
 var imageFiles map[string]*ebiten.Image
@@ -410,7 +411,7 @@ func drawQuestions(screen *ebiten.Image) {
 		} else {
 			clr = defaultColors["purple"]
 		}
-		text.Draw(screen, strings[q.ID], defaultFont, x, y+(i*25), clr)
+		text.Draw(screen, strings[q.ID][0], defaultFont, x, y+(i*25), clr)
 	}
 }
 
@@ -485,8 +486,12 @@ func drawButton(screen *ebiten.Image, buttonText string, x, y int) {
 }
 
 func drawNextPrevious(screen *ebiten.Image) {
-	drawButton(screen, "Previous Lover", 400, 335)
-	drawButton(screen, "Next Lover", 530, 335)
+	if currentLoverIndex > 0 {
+		drawButton(screen, "Previous Lover", 400, 335)
+	}
+	if currentLoverIndex < len(trianglovers)-1 {
+		drawButton(screen, "Next Lover", 530, 335)
+	}
 	if currentLoverIndex == len(trianglovers)-1 {
 		drawButton(screen, "Match!", 710, 335)
 	}
@@ -513,7 +518,7 @@ func drawAnswer(screen *ebiten.Image) {
 	} else {
 		answerID = questions[currentQuestion].ID + "_DEFAULT"
 	}
-	text.Draw(screen, strings[answerID], defaultFont, 30, 510+12, defaultColors["purple"])
+	text.Draw(screen, strings[answerID][currentLover.answerIndex], defaultFont, 30, 510+12, defaultColors["purple"])
 }
 
 func handleStart() {
@@ -588,6 +593,9 @@ func handleMatch() {
 			lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
 		}
 	}
+	if isButtonColliding("Go back", 380, 450) {
+		gameMode = modeGuess
+	}
 	if isButtonColliding("Submit matches!", 350, 400) {
 		if len(matches) == len(trianglovers)/2 {
 			gameMode = modeResult
@@ -620,6 +628,7 @@ func drawMatchPage(screen *ebiten.Image) {
 		drawMatchChart(screen, x, y, lover.guessPoints, false, clr)
 		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
 	}
+	drawButton(screen, "Go back", 380, 450)
 	if len(matches) == len(trianglovers)/2 {
 		drawButton(screen, "Submit matches!", 350, 400)
 	}
@@ -646,6 +655,13 @@ func drawResult(screen *ebiten.Image) {
 			clr = defaultColors["darkPink"]
 		}
 		drawMatchChart(screen, x, y, lover.points, false, clr)
+		hexPoints := getHexPoints(x, y)
+		points := getHexBoundaryPoints(hexPoints)
+		drawPolygon(screen, color.RGBA{255, 255, 255, 25}, []vertex{
+			points[lover.guessPoints[0]],
+			points[lover.guessPoints[1]],
+			points[lover.guessPoints[2]],
+		})
 		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
 	}
 	title := fmt.Sprintf("Correct matches: %d/%d", score, len(matches))
@@ -788,6 +804,7 @@ func init() {
 			headPoint:      headPoint,
 			guessPoints:    guessPoints,
 			questionsAsked: make([]int, 0),
+			answerIndex:    rand.Intn(2),
 		})
 		trianglovers = append(trianglovers, &trianglover{
 			name:           defaultNames[i+5],
@@ -795,6 +812,7 @@ func init() {
 			headPoint:      (headPoint + 1) % 3,
 			guessPoints:    guessPoints,
 			questionsAsked: make([]int, 0),
+			answerIndex:    rand.Intn(2),
 		})
 	}
 	// Disabled for now because it might make the game too hard.
