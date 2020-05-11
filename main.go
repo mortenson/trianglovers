@@ -530,6 +530,8 @@ func getTextWidth(text string, face font.Face) int {
 	for _, r := range []rune(text) {
 		if r == '\n' {
 			width = 0
+			prevR = rune(-1)
+			continue
 		}
 		if prevR >= 0 {
 			width += face.Kern(prevR, r)
@@ -552,6 +554,8 @@ func drawTitle(screen *ebiten.Image) {
 	text.Draw(screen, title, titleFont, (width/2)-(getTextWidth(title, titleFont)/2), (height/2)-45, defaultColors["purple"])
 	button := "Click to begin"
 	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+60, defaultColors["purple"])
+	credits := "by Sam Mortenson"
+	text.Draw(screen, credits, defaultFont, (width/2)-(getTextWidth(credits, defaultFont)/2), height-20, defaultColors["purple"])
 }
 
 func handleMatch() {
@@ -664,20 +668,23 @@ func drawIntro(screen *ebiten.Image) {
 	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 100, defaultColors["purple"])
 	intro := `You've been hired as a matchmaker for 10 eligible Trianglovers!
 
-Your task is to interview each Trianglover, filling out their match
-chart based on their answers. A Lover's true match chart is the same
-shape as them, but may not appear at the same angle. Use the Lover's
-shape as a clue for what their final match chart should look like.
+Your task is to interview each Trianglover, changing their match
+chart based on their answers. To change the match chart, drag its
+points closer to topics the Lover is pasionate about.
+
+A Lover's true match chart is the same shape as them, but may not
+appear at the same rotation. Use the Lover's shape as a clue for
+what their final match chart should look like.
 
 Note that you only get to ask four questions to each Lover, so choose
 wisely!
 
 When you've finished interviewing, it's time to make your matches.
-Lovers are a match when their match charts are exactly the same. If
-you've done your job well five happy couples should be paired.`
+Lovers are a match when their match charts are exactly the same.
+If you've done your job well five happy couples should be matched.`
 	text.Draw(screen, intro, defaultFont, 400-(getTextWidth(intro, defaultFont)/2), 150, defaultColors["purple"])
 	title = "Good luck!"
-	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 400, defaultColors["purple"])
+	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 425, defaultColors["purple"])
 	drawButton(screen, "Start matching", 350, 450)
 }
 
