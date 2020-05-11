@@ -720,8 +720,9 @@ func init() {
 		"Anglea",
 	}
 	rand.Shuffle(len(defaultNames), func(i, j int) { defaultNames[i], defaultNames[j] = defaultNames[j], defaultNames[i] })
-	for i := 0; i < 5; i++ {
-		points := [3]int{
+	var points [3]int
+	for i := 0; i < 4; i++ {
+		points = [3]int{
 			rand.Intn(34),
 			rand.Intn(34) + 34,
 			rand.Intn(34) + 68,
@@ -742,6 +743,29 @@ func init() {
 			questionsAsked: make([]int, 0),
 		})
 	}
+	// To prevent dirty rotten cheaters, generate another pair with shuffled
+	// points from another pair.
+	for i := range points {
+		points[i] += i * 34
+		if points[i] > 102 {
+			points[i] -= 102
+		}
+	}
+	headPoint := rand.Intn(3)
+	trianglovers = append(trianglovers, &trianglover{
+		name:           defaultNames[8],
+		points:         points,
+		headPoint:      headPoint,
+		guessPoints:    guessPoints,
+		questionsAsked: make([]int, 0),
+	})
+	trianglovers = append(trianglovers, &trianglover{
+		name:           defaultNames[9],
+		points:         points,
+		headPoint:      (headPoint + 1) % 3,
+		guessPoints:    guessPoints,
+		questionsAsked: make([]int, 0),
+	})
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
