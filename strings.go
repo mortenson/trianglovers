@@ -2,7 +2,7 @@ package main
 
 func getStrings() map[string]string {
 	return map[string]string{
-		"COMFORT_A":            "You're sitting in font of the TV - what chair are you in?",
+		"COMFORT_A":            "You're sitting in front of the TV - what chair are you in?",
 		"COMFORT_A_STRONG":     "Recliner, easy. Feet up, drink in my coaster, sweatpants on.",
 		"COMFORT_A_NORMAL":     "Maybe a nice sofa I can sink into.",
 		"COMFORT_A_DEFAULT":    "I don't watch TV, and prefer to stand.",

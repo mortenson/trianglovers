@@ -63,6 +63,7 @@ type gameModeType int
 
 const (
 	modeTitle gameModeType = iota
+	modeIntro
 	modeGuess
 	modeMatch
 	modeResult
@@ -511,13 +512,17 @@ func handleStart() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
 	}
-	gameMode = modeGuess
+	gameMode = modeIntro
 }
 
 func getTextWidth(text string, face font.Face) int {
 	width := fixed.I(0)
 	prevR := rune(-1)
+	largestWidth := fixed.I(0)
 	for _, r := range []rune(text) {
+		if r == '\n' {
+			width = 0
+		}
 		if prevR >= 0 {
 			width += face.Kern(prevR, r)
 		}
@@ -527,14 +532,17 @@ func getTextWidth(text string, face font.Face) int {
 		}
 		width += a
 		prevR = r
+		if width > largestWidth {
+			largestWidth = width
+		}
 	}
-	return width.Round()
+	return largestWidth.Round()
 }
 
 func drawTitle(screen *ebiten.Image) {
 	title := "Trianglovers"
 	text.Draw(screen, title, titleFont, (width/2)-(getTextWidth(title, titleFont)/2), (height/2)-45, defaultColors["purple"])
-	button := "Click to start"
+	button := "Click to begin"
 	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+60, defaultColors["purple"])
 }
 
@@ -634,6 +642,37 @@ func drawResult(screen *ebiten.Image) {
 	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 425, defaultColors["purple"])
 }
 
+func handleIntro() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	if isButtonColliding("Start matching", 350, 450) {
+		gameMode = modeGuess
+	}
+}
+
+func drawIntro(screen *ebiten.Image) {
+	title := "Welcome to your new job!"
+	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 100, defaultColors["purple"])
+	intro := `You've been hired as a matchmaker for 10 eligible Trianglovers!
+
+Your task is to interview each Trianglover, filling out their match
+chart based on their answers. A Lover's true match chart is the same
+shape as them, but may not appear at the same angle. Use the Lover's
+shape as a clue for what their final match chart should look like.
+
+Note that you only get to ask four questions to each Lover, so choose
+wisely!
+
+When you've finished interviewing, it's time to make your matches.
+Lovers are a match when their match charts are exactly the same. If
+you've done your job well five happy couples should be paired.`
+	text.Draw(screen, intro, defaultFont, 400-(getTextWidth(intro, defaultFont)/2), 150, defaultColors["purple"])
+	title = "Good luck!"
+	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 400, defaultColors["purple"])
+	drawButton(screen, "Start matching", 350, 450)
+}
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	loadFiles()
@@ -721,7 +760,7 @@ func init() {
 	}
 	rand.Shuffle(len(defaultNames), func(i, j int) { defaultNames[i], defaultNames[j] = defaultNames[j], defaultNames[i] })
 	var points [3]int
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 5; i++ {
 		points = [3]int{
 			rand.Intn(34),
 			rand.Intn(34) + 34,
@@ -743,29 +782,30 @@ func init() {
 			questionsAsked: make([]int, 0),
 		})
 	}
+	// Disabled for now because it might make the game too hard.
 	// To prevent dirty rotten cheaters, generate another pair with shuffled
-	// points from another pair.
-	for i := range points {
-		points[i] += i * 34
-		if points[i] > 102 {
-			points[i] -= 102
-		}
-	}
-	headPoint := rand.Intn(3)
-	trianglovers = append(trianglovers, &trianglover{
-		name:           defaultNames[8],
-		points:         points,
-		headPoint:      headPoint,
-		guessPoints:    guessPoints,
-		questionsAsked: make([]int, 0),
-	})
-	trianglovers = append(trianglovers, &trianglover{
-		name:           defaultNames[9],
-		points:         points,
-		headPoint:      (headPoint + 1) % 3,
-		guessPoints:    guessPoints,
-		questionsAsked: make([]int, 0),
-	})
+	// // points from another pair.
+	// for i := range points {
+	// 	points[i] += i * 34
+	// 	if points[i] > 102 {
+	// 		points[i] -= 102
+	// 	}
+	// }
+	// headPoint := rand.Intn(3)
+	// trianglovers = append(trianglovers, &trianglover{
+	// 	name:           defaultNames[8],
+	// 	points:         points,
+	// 	headPoint:      headPoint,
+	// 	guessPoints:    guessPoints,
+	// 	questionsAsked: make([]int, 0),
+	// })
+	// trianglovers = append(trianglovers, &trianglover{
+	// 	name:           defaultNames[9],
+	// 	points:         points,
+	// 	headPoint:      (headPoint + 1) % 3,
+	// 	guessPoints:    guessPoints,
+	// 	questionsAsked: make([]int, 0),
+	// })
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
@@ -831,6 +871,9 @@ func update(screen *ebiten.Image) error {
 	case modeTitle:
 		handleStart()
 		drawTitle(screen)
+	case modeIntro:
+		handleIntro()
+		drawIntro(screen)
 	case modeGuess:
 		handleDrag()
 		handleQuestions()
