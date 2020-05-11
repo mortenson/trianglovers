@@ -593,7 +593,7 @@ func handleMatch() {
 			lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
 		}
 	}
-	if isButtonColliding("Go back", 380, 450) {
+	if isButtonColliding("Go back", 380, 550) {
 		gameMode = modeGuess
 	}
 	if isButtonColliding("Submit matches!", 350, 400) {
@@ -628,7 +628,7 @@ func drawMatchPage(screen *ebiten.Image) {
 		drawMatchChart(screen, x, y, lover.guessPoints, false, clr)
 		text.Draw(screen, lover.name, defaultFont, x+50-(getTextWidth(lover.name, defaultFont)/2), y+115, defaultColors["purple"])
 	}
-	drawButton(screen, "Go back", 380, 450)
+	drawButton(screen, "Go back", 380, 550)
 	if len(matches) == len(trianglovers)/2 {
 		drawButton(screen, "Submit matches!", 350, 400)
 	}
