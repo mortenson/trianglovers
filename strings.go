@@ -39,7 +39,7 @@ func getStrings() map[string][]string {
 		},
 		"ADVENTURE_A_DEFAULT": []string{
 			"I'm more of a homebody, most of my trips are over my cats!.",
-			"Some place that feels foreign but still speaks my language.",
+			"I took a trip to our local import goods store once.",
 		},
 		"EXCITEMENT_A": []string{"What really gets your heart racing?"},
 		"EXCITEMENT_A_STRONG": []string{

@@ -102,6 +102,7 @@ var eyeR float64
 var eyeDirection float64
 var loverOffset float64
 var loverDirection float64
+var maxQuestions int
 
 func drawPolygon(screen *ebiten.Image, clr color.Color, coordinates []vertex) {
 	path := vector.Path{}
@@ -396,13 +397,13 @@ func hasBeenAsked(q int) bool {
 }
 
 func drawQuestions(screen *ebiten.Image) {
-	text.Draw(screen, fmt.Sprintf("Ask a question (%d/4)", len(currentLover.questionsAsked)), largeFont, 400, 85, defaultColors["purple"])
+	text.Draw(screen, fmt.Sprintf("Ask a question (%d/%d)", len(currentLover.questionsAsked), maxQuestions), largeFont, 400, 85, defaultColors["purple"])
 	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 100}, {780, 100}, {780, 325}, {400, 325}})
 	x := 410
 	y := 122
 	for i, q := range questions {
 		var clr color.Color
-		if len(currentLover.questionsAsked) >= 4 && !hasBeenAsked(i) {
+		if len(currentLover.questionsAsked) >= maxQuestions && !hasBeenAsked(i) {
 			clr = defaultColors["pink"]
 		} else if currentQuestion == i {
 			clr = defaultColors["darkPink"]
@@ -420,7 +421,7 @@ func handleQuestions() {
 	y := 122
 	hoverQuestion = -1
 	for i := range questions {
-		if len(currentLover.questionsAsked) >= 4 && !hasBeenAsked(i) {
+		if len(currentLover.questionsAsked) >= maxQuestions && !hasBeenAsked(i) {
 			continue
 		}
 		qY := y + (i * 25)
@@ -525,13 +526,6 @@ func drawAnswer(screen *ebiten.Image) {
 	text.Draw(screen, strings[answerID][currentLover.answerIndex], defaultFont, 30, 510+12, defaultColors["purple"])
 }
 
-func handleStart() {
-	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		return
-	}
-	gameMode = modeIntro
-}
-
 func getTextWidth(text string, face font.Face) int {
 	width := fixed.I(0)
 	prevR := rune(-1)
@@ -558,12 +552,24 @@ func getTextWidth(text string, face font.Face) int {
 	return largestWidth.Round()
 }
 
+func handleStart() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	if isButtonColliding("Normal mode", 300, (height/2)+60) {
+		gameMode = modeIntro
+	} else if isButtonColliding("Hard mode", 420, (height/2)+60) {
+		gameMode = modeIntro
+		maxQuestions = 4
+	}
+}
+
 func drawTitle(screen *ebiten.Image) {
 	title := "Trianglovers"
 	text.Draw(screen, title, titleFont, (width/2)-(getTextWidth(title, titleFont)/2), (height/2)-45, defaultColors["purple"])
-	button := "Click to begin"
-	text.Draw(screen, button, largeFont, (width/2)-(getTextWidth(button, largeFont)/2), (height/2)+60, defaultColors["purple"])
-	credits := "by Sam Mortenson"
+	drawButton(screen, "Normal mode", 300, (height/2)+60)
+	drawButton(screen, "Hard mode", 420, (height/2)+60)
+	credits := "by Sam and Mykal Mortenson"
 	text.Draw(screen, credits, defaultFont, (width/2)-(getTextWidth(credits, defaultFont)/2), height-20, defaultColors["purple"])
 }
 
@@ -661,7 +667,7 @@ func drawResult(screen *ebiten.Image) {
 		drawMatchChart(screen, x, y, lover.points, false, clr)
 		hexPoints := getHexPoints(x, y)
 		points := getHexBoundaryPoints(hexPoints)
-		drawPolygon(screen, color.RGBA{255, 255, 255, 25}, []vertex{
+		drawPolygon(screen, color.RGBA{255, 255, 255, 50}, []vertex{
 			points[lover.guessPoints[0]],
 			points[lover.guessPoints[1]],
 			points[lover.guessPoints[2]],
@@ -695,9 +701,6 @@ points closer to topics the Lover is pasionate about.
 A Lover's true match chart is the same shape as them, but may not
 appear at the same rotation. Use the Lover's shape as a clue for
 what their final match chart should look like.
-
-Note that you only get to ask four questions to each Lover, so choose
-wisely!
 
 When you've finished interviewing, it's time to make your matches.
 Lovers are a match when their match charts are exactly the same.
@@ -759,15 +762,15 @@ func init() {
 				{
 					ID: hexPoint.ID + "_A_STRONG",
 					ranges: fixRanges([][2]int{
-						{hexPoint.point - 8, hexPoint.point - 1},
-						{hexPoint.point, hexPoint.point + 8},
+						{hexPoint.point - 4, hexPoint.point - 1},
+						{hexPoint.point, hexPoint.point + 4},
 					}),
 				},
 				{
 					ID: hexPoint.ID + "_A_NORMAL",
 					ranges: fixRanges([][2]int{
-						{hexPoint.point - 17, hexPoint.point - 8},
-						{hexPoint.point + 8, hexPoint.point + 17},
+						{hexPoint.point - 8, hexPoint.point - 4},
+						{hexPoint.point + 4, hexPoint.point + 8},
 					}),
 				},
 			},
@@ -851,6 +854,7 @@ func init() {
 	eyeDirection = 1
 	loverOffset = 0
 	loverDirection = 1
+	maxQuestions = 6
 }
 
 func loadFiles() {
