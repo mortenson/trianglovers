@@ -41,7 +41,7 @@ func handleMatch() {
 		} else {
 			// Start a new match with a random color.
 			gState.lastMatch = i
-			gState.lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
+			gState.lastMatchColor = color.RGBA{uint8(55 + rand.Intn(150)), uint8(55 + rand.Intn(150)), uint8(55 + rand.Intn(150)), 255}
 		}
 	}
 	// Returns players to the interview phase.
