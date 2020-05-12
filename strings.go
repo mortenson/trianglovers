@@ -13,7 +13,7 @@ func getStrings() map[string][]string {
 		},
 		"COMFORT_A_DEFAULT": []string{
 			"I don't watch TV, and prefer to stand.",
-			"I'm on the groud, doing push ups every time the studio audience laughs.",
+			"I'm on the ground, doing push ups every time the studio\naudience laughs.",
 		},
 		"WEALTH_A": []string{"What's your dream birthday gift?"},
 		"WEALTH_A_STRONG": []string{

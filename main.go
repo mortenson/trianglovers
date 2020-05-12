@@ -495,6 +495,10 @@ func drawNextPrevious(screen *ebiten.Image) {
 	if currentLoverIndex == len(trianglovers)-1 {
 		drawButton(screen, "Match!", 710, 335)
 	}
+	count := len(trianglovers) - currentLoverIndex - 1
+	if count > 0 {
+		text.Draw(screen, fmt.Sprintf("%d remaining", count), defaultFont, 630, 360, defaultColors["purple"])
+	}
 }
 
 func drawAnswer(screen *ebiten.Image) {
@@ -791,11 +795,26 @@ func init() {
 	}
 	rand.Shuffle(len(defaultNames), func(i, j int) { defaultNames[i], defaultNames[j] = defaultNames[j], defaultNames[i] })
 	var points [3]int
-	for i := 0; i < 4; i++ {
-		points = [3]int{
-			rand.Intn(34),
-			rand.Intn(34) + 34,
-			rand.Intn(34) + 68,
+	pointHistory := [][3]int{}
+	for i := 0; i < 5; i++ {
+		// Generate random points that are unique enough to make the game fair.
+		for {
+			goodPoints := true
+			points = [3]int{
+				rand.Intn(34),
+				rand.Intn(34) + 34,
+				rand.Intn(34) + 68,
+			}
+			for _, h := range pointHistory {
+				if math.Abs(float64(h[0]-points[0])) <= 8 && math.Abs(float64(h[1]-points[1])) <= 8 && math.Abs(float64(h[2]-points[2])) <= 8 {
+					goodPoints = false
+					break
+				}
+			}
+			if goodPoints {
+				pointHistory = append(pointHistory, points)
+				break
+			}
 		}
 		headPoint := rand.Intn(3)
 		trianglovers = append(trianglovers, &trianglover{
@@ -815,33 +834,10 @@ func init() {
 			answerIndex:    rand.Intn(2),
 		})
 	}
-	// To prevent dirty rotten cheaters, generate another pair with shuffled
-	// // points from another pair.
-	for i := range points {
-		points[i] += i * 34
-		if points[i] > 102 {
-			points[i] -= 102
-		}
-	}
-	headPoint := rand.Intn(3)
-	trianglovers = append(trianglovers, &trianglover{
-		name:           defaultNames[8],
-		points:         points,
-		headPoint:      headPoint,
-		guessPoints:    guessPoints,
-		questionsAsked: make([]int, 0),
-	})
-	trianglovers = append(trianglovers, &trianglover{
-		name:           defaultNames[9],
-		points:         points,
-		headPoint:      (headPoint + 1) % 3,
-		guessPoints:    guessPoints,
-		questionsAsked: make([]int, 0),
-	})
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeTitle
+	gameMode = modeResult
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
