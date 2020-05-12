@@ -11,6 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/text"
 )
 
+// Draws the next/previous/match buttons that sit below the questions.
 func drawNextPrevious(screen *ebiten.Image) {
 	if gState.currentLoverIndex > 0 {
 		drawButton(screen, "Previous Lover", 400, 335)
@@ -27,11 +28,14 @@ func drawNextPrevious(screen *ebiten.Image) {
 	}
 }
 
+// Draws an answer based on the current question.
 func drawAnswer(screen *ebiten.Image) {
 	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{20, 500}, {500, 500}, {500, 580}, {20, 580}})
 	if gState.currentQuestion == -1 {
 		return
 	}
+	// Determine the correct answer by checking the answer ranges against the
+	// triangle's points. The answer with the lowest weight is preferred.
 	chosenAnswer := -1
 	for i, a := range questions[gState.currentQuestion].answers {
 		for _, r := range a.ranges {
@@ -42,6 +46,7 @@ func drawAnswer(screen *ebiten.Image) {
 			}
 		}
 	}
+	// Get the answer text, or fall back to the default answer.
 	var answerID string
 	if chosenAnswer != -1 {
 		answerID = questions[gState.currentQuestion].answers[chosenAnswer].ID
@@ -51,6 +56,9 @@ func drawAnswer(screen *ebiten.Image) {
 	text.Draw(screen, strings[answerID][gState.currentLover.answerIndex], defaultFont, 30, 510+12, defaultColors["purple"])
 }
 
+// Draws an animated trianglover on the screen.
+// Originally this was going to support drawing multiple lovers on one page,
+// but time pressure pushed the code to be less abstract.
 func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	points := getHexBoundaryPoints(getHexPoints(100, 300))
 	vertices := []vertex{points[lover.points[0]], points[lover.points[1]], points[lover.points[2]]}
@@ -125,6 +133,9 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(25, 175)
 	screen.DrawImage(imageFiles["eyeball.png"], op)
+	// Calculate the current eyeball rotation - it basically spins ina circle
+	// but randomly changes direction 2% of the time (checked every frame).
+	// Time isn't used for animation, but should be to account for FPS changes.
 	if gState.eyeR <= 0 || (gState.eyeR < 1.5*math.Pi && rand.Intn(100) > 98) {
 		gState.eyeDirection = 1
 	} else if gState.eyeR >= 2*math.Pi || (gState.eyeR >= 1.5*math.Pi && rand.Intn(100) > 98) {
@@ -152,6 +163,7 @@ func drawTrianglover(screen *ebiten.Image, lover *trianglover) {
 	screen.DrawImage(imageFiles["mouth.png"], op)
 }
 
+// Draws the match chart. This function is also used for matching and results.
 func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabels bool, clr color.Color) {
 	// Draw hexagon.
 	hexPoints := getHexPoints(x, y)
@@ -163,7 +175,8 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 		points[prefPoints[1]],
 		points[prefPoints[2]],
 	})
-	// Register drag points (targets)
+	// Register drag points (targets).
+	// This shouldn't be in the draw method, it's just easy to put it here.
 	gState.dragTargets = points
 	// Register drag points.
 	gState.dragPoints[0].position = points[prefPoints[0]]
@@ -216,6 +229,7 @@ func drawMatchChart(screen *ebiten.Image, x, y int, prefPoints [3]int, drawLabel
 	}
 }
 
+// Handles the match chart's drag behavior.
 func handleDrag() {
 	mouseX, mouseY := ebiten.CursorPosition()
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
@@ -238,6 +252,9 @@ func handleDrag() {
 			continue
 		}
 		min := 0
+		// Points are locked into specific ranges because not all triangles on
+		// the chart are valid. This reflects how trianglovers are randomly
+		// generated.
 		max := 34
 		switch pointID {
 		case 1:
@@ -247,6 +264,7 @@ func handleDrag() {
 			min = 68
 			max = 102
 		}
+		// Find the closest point to the mouse and update the guessPoints.
 		closestID := -1
 		closestDistance := 100.0
 		for i := min; i < max; i++ {
@@ -263,6 +281,7 @@ func handleDrag() {
 	}
 }
 
+// Checks if a question has already been asked by the current lover.
 func hasBeenAsked(q int) bool {
 	for _, id := range gState.currentLover.questionsAsked {
 		if q == id {
@@ -272,6 +291,7 @@ func hasBeenAsked(q int) bool {
 	return false
 }
 
+// Draws questions onto the screen.
 func drawQuestions(screen *ebiten.Image) {
 	text.Draw(screen, fmt.Sprintf("Ask a question (%d/%d)", len(gState.currentLover.questionsAsked), gState.maxQuestions), largeFont, 400, 85, defaultColors["purple"])
 	drawPolygonLine(screen, 2, defaultColors["darkPink"], defaultColors["white"], []vertex{{400, 100}, {780, 100}, {780, 325}, {400, 325}})
@@ -292,6 +312,8 @@ func drawQuestions(screen *ebiten.Image) {
 	}
 }
 
+// Handles when questions have been clicked. In hard mode, only four questions
+// can be asked of each lover, so this keeps track of that.
 func handleQuestions() {
 	mouseX, mouseY := ebiten.CursorPosition()
 	y := 122
@@ -315,6 +337,7 @@ func handleQuestions() {
 	}
 }
 
+// Handles when the next/previous/match buttons have been clicked.
 func handleNextPrevious() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
@@ -336,4 +359,20 @@ func handleNextPrevious() {
 	} else if gState.currentLoverIndex == len(gState.trianglovers)-1 && isButtonColliding("Match!", 710, 335) {
 		gState.gameMode = modeMatch
 	}
+}
+
+// The main wrapper for all guess page behaviors.
+func handleGuess() {
+	handleDrag()
+	handleQuestions()
+	handleNextPrevious()
+}
+
+// The main wrapper for all drawn elements on the guess page.
+func drawGuess(screen *ebiten.Image) {
+	drawMatchChart(screen, width-180, height-120, gState.currentLover.guessPoints, true, defaultColors["darkPink"])
+	drawTrianglover(screen, gState.currentLover)
+	drawQuestions(screen)
+	drawAnswer(screen)
+	drawNextPrevious(screen)
 }

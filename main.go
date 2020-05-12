@@ -309,14 +309,8 @@ func update(screen *ebiten.Image) error {
 		handleIntro()
 		drawIntro(screen)
 	case modeGuess:
-		handleDrag()
-		handleQuestions()
-		handleNextPrevious()
-		drawMatchChart(screen, width-180, height-120, gState.currentLover.guessPoints, true, defaultColors["darkPink"])
-		drawTrianglover(screen, gState.currentLover)
-		drawQuestions(screen)
-		drawAnswer(screen)
-		drawNextPrevious(screen)
+		handleGuess()
+		drawGuess(screen)
 	case modeMatch:
 		handleMatch()
 		drawMatchPage(screen)

@@ -11,6 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/text"
 )
 
+// Handles the game being replayed.
 func handleResult() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
@@ -22,29 +23,36 @@ func handleResult() {
 	}
 }
 
+// Draws the result page.
 func drawResult(screen *ebiten.Image) {
 	score := 0
-	colormap := map[int]color.Color{}
+	// Map lover indexes to whether or not the match succeeded.
+	successMap := map[int]bool{}
 	for _, m := range gState.matches {
 		if gState.trianglovers[m.a].points == gState.trianglovers[m.b].points {
 			score++
-			colormap[m.a] = color.RGBA{104, 211, 116, 255}
-			colormap[m.b] = colormap[m.a]
+			successMap[m.a] = true
+			successMap[m.b] = successMap[m.a]
 		} else {
-			colormap[m.a] = color.RGBA{223, 90, 117, 255}
-			colormap[m.b] = colormap[m.a]
+			successMap[m.a] = false
+			successMap[m.b] = successMap[m.a]
 		}
 	}
+	// Draw grid of match charts indicating success.
 	for i, lover := range gState.trianglovers {
 		x := ((i % 5) * 125) + 100
 		y := (int(i/5) * 125) + 25
-		clr, ok := colormap[i]
-		if !ok {
-			clr = defaultColors["darkPink"]
+		success, ok := successMap[i]
+		var clr color.Color
+		if ok && success {
+			clr = color.RGBA{104, 211, 116, 255}
+		} else {
+			clr = color.RGBA{223, 90, 117, 255}
 		}
 		drawMatchChart(screen, x, y, lover.points, false, clr)
 		hexPoints := getHexPoints(x, y)
 		points := getHexBoundaryPoints(hexPoints)
+		// Overlay an opaque triangle representing the user's guess.
 		drawPolygon(screen, color.RGBA{255, 255, 255, 50}, []vertex{
 			points[lover.guessPoints[0]],
 			points[lover.guessPoints[1]],

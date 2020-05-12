@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/text"
 )
 
+// Handles the start button being cicked.
 func handleIntro() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
@@ -15,6 +16,7 @@ func handleIntro() {
 	}
 }
 
+// Draws intro text describing how the game works.
 func drawIntro(screen *ebiten.Image) {
 	title := "Welcome to your new job!"
 	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 100, defaultColors["purple"])

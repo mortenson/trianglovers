@@ -9,6 +9,7 @@ import (
 	"github.com/hajimehoshi/ebiten/text"
 )
 
+// Handles the behavior of matching lovers, which is complex.
 func handleMatch() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
@@ -19,6 +20,7 @@ func handleMatch() {
 		if !isMouseColliding(x, y, 100, 100) {
 			continue
 		}
+		// If a match already exists for this lover, remove it.
 		for j, m := range gState.matches {
 			if m.a == i || m.b == i {
 				gState.matches = append(gState.matches[:j], gState.matches[j+1:]...)
@@ -26,8 +28,10 @@ func handleMatch() {
 			}
 		}
 		if gState.lastMatch == i {
+			// If a lover is clicked twice, cancel the match.
 			gState.lastMatch = -1
 		} else if gState.lastMatch != -1 {
+			// Add a new match.
 			gState.matches = append(gState.matches, match{
 				a:     gState.lastMatch,
 				b:     i,
@@ -35,13 +39,16 @@ func handleMatch() {
 			})
 			gState.lastMatch = -1
 		} else {
+			// Start a new match with a random color.
 			gState.lastMatch = i
 			gState.lastMatchColor = color.RGBA{uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), uint8(55 + rand.Intn(200)), 255}
 		}
 	}
+	// Returns players to the interview phase.
 	if isButtonColliding("Go back", 380, 550) {
 		gState.gameMode = modeGuess
 	}
+	// Submits matches, if all matches are made.
 	if isButtonColliding("Submit matches!", 350, 400) {
 		if len(gState.matches) == len(gState.trianglovers)/2 {
 			gState.gameMode = modeResult
@@ -49,6 +56,7 @@ func handleMatch() {
 	}
 }
 
+// Draws the match page.
 func drawMatchPage(screen *ebiten.Image) {
 	title := "Match the lovers"
 	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 75, defaultColors["purple"])

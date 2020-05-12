@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/text"
 )
 
+// Handles the game starting.
 func handleStart() {
 	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		return
@@ -18,6 +19,7 @@ func handleStart() {
 	}
 }
 
+// Draws the title screen.
 func drawTitle(screen *ebiten.Image) {
 	title := "Trianglovers"
 	text.Draw(screen, title, titleFont, (width/2)-(getTextWidth(title, titleFont)/2), (height/2)-45, defaultColors["purple"])
