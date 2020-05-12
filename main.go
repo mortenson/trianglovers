@@ -321,6 +321,7 @@ func update(screen *ebiten.Image) error {
 		handleMatch()
 		drawMatchPage(screen)
 	case modeResult:
+		handleResult()
 		drawResult(screen)
 	}
 

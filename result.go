@@ -3,10 +3,24 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/text"
 )
+
+func handleResult() {
+	if !inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		return
+	}
+	if isButtonColliding("Replay", 385, 550) {
+		rand.Seed(time.Now().UnixNano())
+		gState = newGameState()
+		gState.gameMode = modeTitle
+	}
+}
 
 func drawResult(screen *ebiten.Image) {
 	score := 0
@@ -42,4 +56,5 @@ func drawResult(screen *ebiten.Image) {
 	text.Draw(screen, title, largeFont, 400-(getTextWidth(title, largeFont)/2), 350, defaultColors["purple"])
 	title = "Thanks for playing!"
 	text.Draw(screen, title, titleFont, 400-(getTextWidth(title, titleFont)/2), 425, defaultColors["purple"])
+	drawButton(screen, "Replay", 385, 550)
 }
