@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gobuffalo/packr"
+	packr "github.com/gobuffalo/packr/v2"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
@@ -263,7 +263,7 @@ func loadFiles() {
 	files = make(map[string][]byte, 0)
 	imageFiles = make(map[string]*ebiten.Image, 0)
 	fontFiles = make(map[string]*truetype.Font, 0)
-	packrBox := packr.NewBox("./assets")
+	packrBox := packr.New("assets", "./assets")
 	for _, f := range packrBox.List() {
 		b, err := packrBox.Find(f)
 		if err != nil {
