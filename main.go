@@ -837,7 +837,7 @@ func init() {
 	rand.Shuffle(len(trianglovers), func(i, j int) { trianglovers[i], trianglovers[j] = trianglovers[j], trianglovers[i] })
 	currentLover = trianglovers[0]
 	currentLoverIndex = 0
-	gameMode = modeResult
+	gameMode = modeTitle
 	lastMatch = -1
 	matches = make([]match, 0)
 	strings = getStrings()
