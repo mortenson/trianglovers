@@ -181,8 +181,9 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 		// In hard mode, two pairs of lovers have the same points in different
 		// rotatations. This makes guessing based on shape alone impossible.
 		if hardMode && i < 2 {
+			offset := rand.Intn(34)
 			for j := range points {
-				points[j] += j * 34
+				points[j] += offset + (j * 34)
 				if points[j] > 102 {
 					points[j] -= 102
 				}
