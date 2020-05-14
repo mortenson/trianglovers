@@ -113,7 +113,10 @@ func newGameState() *gameState {
 		loverDirection:    1,
 		maxQuestions:      6,
 	}
+	return &s
+}
 
+func (s *gameState) genTrianglovers(hardMode bool) {
 	defaultNames := []string{
 		"Digree",
 		"Acutie",
@@ -134,7 +137,11 @@ func newGameState() *gameState {
 		34,
 		68,
 	}
-	for i := 0; i < 5; i++ {
+	max := 5
+	if hardMode {
+		max = 3
+	}
+	for i := 0; i < max; i++ {
 		// Generate random points that are unique enough to make the game fair.
 		for {
 			goodPoints := true
@@ -164,17 +171,42 @@ func newGameState() *gameState {
 			answerIndex:    rand.Intn(2),
 		})
 		s.trianglovers = append(s.trianglovers, &trianglover{
-			name:           defaultNames[i+5],
+			name:           defaultNames[i+max],
 			points:         points,
 			headPoint:      (headPoint + 1) % 3,
 			guessPoints:    guessPoints,
 			questionsAsked: make([]int, 0),
 			answerIndex:    rand.Intn(2),
 		})
+		// In hard mode, two pairs of lovers have the same points in different
+		// rotatations. This makes guessing based on shape alone impossible.
+		if hardMode && i < 2 {
+			for j := range points {
+				points[j] += j * 34
+				if points[j] > 102 {
+					points[j] -= 102
+				}
+			}
+			pointHistory = append(pointHistory, points)
+			headPoint := rand.Intn(3)
+			s.trianglovers = append(s.trianglovers, &trianglover{
+				name:           defaultNames[i+6],
+				points:         points,
+				headPoint:      headPoint,
+				guessPoints:    guessPoints,
+				questionsAsked: make([]int, 0),
+			})
+			s.trianglovers = append(s.trianglovers, &trianglover{
+				name:           defaultNames[i+8],
+				points:         points,
+				headPoint:      (headPoint + 1) % 3,
+				guessPoints:    guessPoints,
+				questionsAsked: make([]int, 0),
+			})
+		}
 	}
 	rand.Shuffle(len(s.trianglovers), func(i, j int) { s.trianglovers[i], s.trianglovers[j] = s.trianglovers[j], s.trianglovers[i] })
 	s.currentLover = s.trianglovers[0]
-	return &s
 }
 
 func init() {

@@ -13,9 +13,11 @@ func handleStart() {
 	}
 	if isButtonColliding("Normal mode", 300, (height/2)+60) {
 		gState.gameMode = modeIntro
+		gState.genTrianglovers(false)
 	} else if isButtonColliding("Hard mode", 420, (height/2)+60) {
 		gState.gameMode = modeIntro
 		gState.maxQuestions = 4
+		gState.genTrianglovers(true)
 	}
 }
 
