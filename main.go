@@ -14,6 +14,7 @@ import (
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/audio"
+	"github.com/hajimehoshi/ebiten/audio/mp3"
 	"github.com/hajimehoshi/ebiten/audio/wav"
 	"golang.org/x/image/font"
 )
@@ -301,8 +302,16 @@ func loadFiles() {
 	fontFiles = make(map[string]*truetype.Font, 0)
 	audioFiles = make(map[string]*audio.Player, 0)
 	packrBox := packr.New("assets", "./assets")
+	audioContext, err := audio.NewContext(44100)
+	if err != nil {
+		panic(err)
+	}
 	for _, f := range packrBox.List() {
 		b, err := packrBox.Find(f)
+		if err != nil {
+			panic(err)
+		}
+		s, err := packrBox.Open(f)
 		if err != nil {
 			panic(err)
 		}
@@ -324,15 +333,17 @@ func loadFiles() {
 			}
 			fontFiles[f] = ttf
 		case ".wav":
-			audioContext, err := audio.NewContext(44100)
-			if err != nil {
-				panic(err)
-			}
-			s, err := packrBox.Open(f)
-			if err != nil {
-				panic(err)
-			}
 			d, err := wav.Decode(audioContext, s)
+			if err != nil {
+				panic(err)
+			}
+			audioPlayer, err := audio.NewPlayer(audioContext, d)
+			if err != nil {
+				panic(err)
+			}
+			audioFiles[f] = audioPlayer
+		case ".mp3":
+			d, err := mp3.Decode(audioContext, s)
 			if err != nil {
 				panic(err)
 			}

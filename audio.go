@@ -11,7 +11,7 @@ func handleAudioToggle() {
 		audioToggle = !audioToggle
 	}
 
-	bgm := audioFiles["bgm.wav"]
+	bgm := audioFiles["bgm.mp3"]
 	if !audioToggle && bgm.IsPlaying() {
 		bgm.Pause()
 	} else if audioToggle && !bgm.IsPlaying() {
