@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/color"
 	_ "image/png"
@@ -14,7 +13,8 @@ import (
 	packr "github.com/gobuffalo/packr/v2"
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/audio"
+	"github.com/hajimehoshi/ebiten/audio/wav"
 	"golang.org/x/image/font"
 )
 
@@ -93,7 +93,9 @@ var strings map[string][]string
 var files map[string][]byte
 var fontFiles map[string]*truetype.Font
 var imageFiles map[string]*ebiten.Image
+var audioFiles map[string]*audio.Player
 var defaultColors map[string]color.Color
+var audioToggle bool
 var gState *gameState
 
 func newGameState() *gameState {
@@ -288,14 +290,16 @@ func init() {
 		"purple":   color.RGBA{175, 58, 141, 255},
 		"white":    color.RGBA{255, 241, 241, 255},
 	}
+	audioToggle = true
 }
 
 // Helper function to load all assets from packr, processing them early if
-// possible. Supports PNG images and TTF fonts.
+// possible. Supports PNG images, WAV music, and TTF fonts.
 func loadFiles() {
 	files = make(map[string][]byte, 0)
 	imageFiles = make(map[string]*ebiten.Image, 0)
 	fontFiles = make(map[string]*truetype.Font, 0)
+	audioFiles = make(map[string]*audio.Player, 0)
 	packrBox := packr.New("assets", "./assets")
 	for _, f := range packrBox.List() {
 		b, err := packrBox.Find(f)
@@ -319,6 +323,24 @@ func loadFiles() {
 				panic(err)
 			}
 			fontFiles[f] = ttf
+		case ".wav":
+			audioContext, err := audio.NewContext(44100)
+			if err != nil {
+				panic(err)
+			}
+			s, err := packrBox.Open(f)
+			if err != nil {
+				panic(err)
+			}
+			d, err := wav.Decode(audioContext, s)
+			if err != nil {
+				panic(err)
+			}
+			audioPlayer, err := audio.NewPlayer(audioContext, d)
+			if err != nil {
+				panic(err)
+			}
+			audioFiles[f] = audioPlayer
 		default:
 			files[f] = b
 		}
@@ -332,7 +354,8 @@ func update(screen *ebiten.Image) error {
 	op.GeoM.Translate(0, 0)
 	screen.DrawImage(imageFiles["background.png"], op)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()))
+	handleAudioToggle()
+	drawAudioToggle(screen)
 
 	switch gState.gameMode {
 	case modeTitle:
