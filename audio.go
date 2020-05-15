@@ -13,6 +13,8 @@ func handleAudioToggle() {
 		audioToggle = !audioToggle
 	}
 
+	// This fixes an odd bug where the first time the mp3 is played, a horrible
+	// crackling noise starts.
 	bgm := audioFiles["bgm.mp3"]
 	if time.Now().After(audioBufferUntil) {
 		bgm.SetVolume(1)
