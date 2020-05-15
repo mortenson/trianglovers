@@ -9,7 +9,7 @@ import (
 )
 
 func handleAudioToggle() {
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) && isMouseColliding(width-70, 0, 60, 14) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) && isMouseColliding(width-60, 0, 60, 14) {
 		audioToggle = !audioToggle
 	}
 
@@ -35,5 +35,9 @@ func drawAudioToggle(screen *ebiten.Image) {
 	if !audioToggle {
 		prompt = "audio off"
 	}
-	text.Draw(screen, prompt, defaultFont, width-60, 14, defaultColors["purple"])
+	clr := defaultColors["purple"]
+	if isMouseColliding(width-60, 0, 60, 14) {
+		clr = defaultColors["darkPink"]
+	}
+	text.Draw(screen, prompt, defaultFont, width-60, 14, clr)
 }
