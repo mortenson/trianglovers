@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/hajimehoshi/ebiten/text"
@@ -12,6 +14,12 @@ func handleAudioToggle() {
 	}
 
 	bgm := audioFiles["bgm.mp3"]
+	if time.Now().After(audioBufferUntil) {
+		bgm.SetVolume(1)
+	} else {
+		bgm.SetVolume(0)
+	}
+
 	if !audioToggle && bgm.IsPlaying() {
 		bgm.Pause()
 	} else if audioToggle && !bgm.IsPlaying() {

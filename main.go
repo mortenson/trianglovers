@@ -97,6 +97,7 @@ var imageFiles map[string]*ebiten.Image
 var audioFiles map[string]*audio.Player
 var defaultColors map[string]color.Color
 var audioToggle bool
+var audioBufferUntil time.Time
 var gState *gameState
 
 func newGameState() *gameState {
@@ -292,6 +293,7 @@ func init() {
 		"white":    color.RGBA{255, 241, 241, 255},
 	}
 	audioToggle = true
+	audioBufferUntil = time.Now().Add(time.Second * 1)
 }
 
 // Helper function to load all assets from packr, processing them early if
