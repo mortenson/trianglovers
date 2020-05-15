@@ -361,6 +361,16 @@ func handleNextPrevious() {
 	}
 }
 
+// Informs users that they can drag points.
+func drawHelper(screen *ebiten.Image) {
+	if gState.currentLoverIndex == 0 && len(gState.currentLover.questionsAsked) > 0 && gState.currentLover.guessPoints == [3]int{0, 34, 68} {
+		text.Draw(screen, "Drag the chart points!", defaultFont, width-360, height-170, defaultColors["purple"])
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(width-210, height-180)
+		screen.DrawImage(imageFiles["arrow.png"], op)
+	}
+}
+
 // The main wrapper for all guess page behaviors.
 func handleGuess() {
 	handleDrag()
@@ -375,4 +385,5 @@ func drawGuess(screen *ebiten.Image) {
 	drawQuestions(screen)
 	drawAnswer(screen)
 	drawNextPrevious(screen)
+	drawHelper(screen)
 }

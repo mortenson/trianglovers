@@ -218,8 +218,10 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	// Initialize game satte.
+	// Initialize game state.
 	gState = newGameState()
+	gState.genTrianglovers(false)
+	gState.gameMode = modeGuess
 	// Load static assets.
 	loadFiles()
 	defaultFont = truetype.NewFace(fontFiles["Archivo-SemiBold.ttf"], &truetype.Options{
