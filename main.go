@@ -16,6 +16,7 @@ import (
 	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/audio/mp3"
 	"github.com/hajimehoshi/ebiten/audio/wav"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"golang.org/x/image/font"
 )
 
@@ -99,6 +100,7 @@ var defaultColors map[string]color.Color
 var audioToggle bool
 var audioBufferUntil time.Time
 var gState *gameState
+var screenScale float64
 
 func newGameState() *gameState {
 	s := gameState{
@@ -294,6 +296,7 @@ func init() {
 	}
 	audioToggle = true
 	audioBufferUntil = time.Now().Add(time.Second * 1)
+	screenScale = 1.5
 }
 
 // Helper function to load all assets from packr, processing them early if
@@ -361,7 +364,18 @@ func loadFiles() {
 }
 
 func update(screen *ebiten.Image) error {
-	ebiten.SetScreenScale(1.5)
+	if inpututil.KeyPressDuration(ebiten.KeyS) == 1 {
+		if screenScale == 1 {
+			screenScale = 1.5
+		} else {
+			screenScale = 1
+		}
+	}
+	ebiten.SetScreenScale(screenScale)
+
+	if inpututil.KeyPressDuration(ebiten.KeyF) == 1 {
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	}
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(0, 0)
