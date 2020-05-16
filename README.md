@@ -10,6 +10,8 @@ days. It uses the Ebiten engine for Go.
 
 ```
 go mod download
+# Might be required to get binaries
+go get -u github.com/machinebox/appify
 go get -u github.com/gobuffalo/packr/v2/packr2
 ```
 
