@@ -174,7 +174,7 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 			headPoint:      headPoint,
 			guessPoints:    guessPoints,
 			questionsAsked: make([]int, 0),
-			answerIndex:    rand.Intn(2),
+			answerIndex:    rand.Intn(3),
 		})
 		s.trianglovers = append(s.trianglovers, &trianglover{
 			name:           defaultNames[i+max],
@@ -182,7 +182,7 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 			headPoint:      (headPoint + 1) % 3,
 			guessPoints:    guessPoints,
 			questionsAsked: make([]int, 0),
-			answerIndex:    rand.Intn(2),
+			answerIndex:    rand.Intn(3),
 		})
 		// In hard mode, two pairs of lovers have the same points in different
 		// rotatations. This makes guessing based on shape alone impossible.
@@ -202,6 +202,7 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 				headPoint:      headPoint,
 				guessPoints:    guessPoints,
 				questionsAsked: make([]int, 0),
+				answerIndex:    rand.Intn(3),
 			})
 			s.trianglovers = append(s.trianglovers, &trianglover{
 				name:           defaultNames[i+8],
@@ -209,6 +210,7 @@ func (s *gameState) genTrianglovers(hardMode bool) {
 				headPoint:      (headPoint + 1) % 3,
 				guessPoints:    guessPoints,
 				questionsAsked: make([]int, 0),
+				answerIndex:    rand.Intn(3),
 			})
 		}
 	}
