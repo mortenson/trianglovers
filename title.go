@@ -29,6 +29,6 @@ func drawTitle(screen *ebiten.Image) {
 	drawButton(screen, "Hard mode", 420, (height/2)+60)
 	credits := "by Sam and Mykal Mortenson"
 	text.Draw(screen, credits, defaultFont, (width/2)-(getTextWidth(credits, defaultFont)/2), height-20, defaultColors["purple"])
-	help := "(f) fullscreen (s) window size"
-	text.Draw(screen, help, defaultFont, width-getTextWidth(help, defaultFont)-5, height-5, defaultColors["purple"])
+	help := "[f] fullscreen [s] window size"
+	text.Draw(screen, help, defaultFont, 5, 16, defaultColors["purple"])
 }
