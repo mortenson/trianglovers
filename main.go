@@ -408,6 +408,7 @@ func update(screen *ebiten.Image) error {
 }
 
 func main() {
+	ebiten.SetRunnableOnUnfocused(true)
 	if err := ebiten.Run(update, width, height, 2, "Trianglovers"); err != nil {
 		panic(err)
 	}
